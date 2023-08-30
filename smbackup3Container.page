@@ -1,0 +1,134 @@
+Menu="smbackup:3"
+Title="Container"
+Icon="clone"
+---
+
+<?php
+
+$docker = new Docker();
+$container_list = $docker->getContainers();
+
+?>
+
+<form action="" id="vm_ignore_form" onsubmit="return false;">
+    <input type="hidden" name="action" value="ignore_vms">
+    <?php if(!Config::$ENABLE_APPDATA_BACKUP): ?>
+
+        <div class='notice shift'><?=_(LANG_GUI_SECURITYNOTE_VMBACKUPDISABLED)?></div>
+
+    <?php endif; ?>
+    <table class="disk_status wide">
+        <thead>
+            <tr>
+                <td style="width: 10px; text-align:center;"><?=_(LANG_GUI_TABLE_COL_DISABLE)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_NAME)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_LASTBACKUP)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_BACKUPCOUNT)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_BACKUPSIZE)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_ACTIONS)?></td>
+            </tr>
+        </thead>
+        <tbody>
+            <?php 
+                foreach($container_list as $key => $container): 
+                    $backups = [];#$vm->getStoredBackups();
+                    $backup_size = 0;
+                    $last_backup = 'never';
+
+                    if(count($backups)>0) {
+                        $backups[array_key_last($backups)]['Timestamp'];
+                    }
+
+                    foreach($backups as $backup) {
+                        $backup_size += $backup['Size'];
+                    }
+            ?>
+            <tr style="background-color: #272927;">
+                <td style="width: 10px; text-align:center;">
+                    <input 
+                        type="checkbox" 
+                        name="disable_container[]" 
+                        value="<?=$container->name?>" <?= (in_array($container->name, Config::$APPDATA_IGNORE_CONTAINER) ? 'checked' : '') ?>>
+                </td>
+                <td>
+                    <img src="<?=$container->icon?>" style="max-height: 30px" alt="">
+                    <a href="#" onclick="toggle_block('block1-<?=$key?>');toggle_block('block2-<?=$key?>');"><?=$container->name?></a>
+
+                    <span 
+                        style="color: red; display: none;" 
+                        id="view3_text_running_<?=$container->id?>">backup is running</span>
+                    <span 
+                        style="color: red; display: none;" 
+                        id="view3_text_runningtime_<?=$container->id?>">[time]</span>
+                </td>
+                <td><?=$last_backup?></td>
+                <td><?=count($backups)?></td>
+                <td><?=convertSize($backup_size)?></td>
+                <td>
+                    <button 
+                        disabled
+                        id="view3_btn_backupnow_<?=$container->id?>" 
+                        onclick="backupnow_container('<?=$container->name?>')" 
+                    ><?=_(LANG_GUI_BTN_BACKUPNOW)?></button></td>
+            </tr>
+            <?php 
+                foreach($container->mounts as $mount): 
+                    if($mount['Type'] != 'bind') { continue; }
+            ?>
+            <tr class="wrapper blockX-<?=$key?>">
+                <td style="width: 10px; text-align:center;">
+                    
+                </td>
+                <td colspan="5">
+                    <input 
+                        type="checkbox" 
+                        name="disable_bind[]" 
+                        value="<?=$container->name?>" <?= (in_array($container->name, Config::$APPDATA_IGNORE_CONTAINER) ? 'checked' : '') ?>>
+                    <?=$mount['Source']?>
+                    <?php
+                        if(!$mount['RW']) {
+                            echo '<p style="color: orange">This bind is not writable. Are you sure that a backup is necessary?</p>';
+                        }
+                        if(strpos($mount['Source'], '/mnt/user/appdata/') !== 0) {
+                            echo '<p style="color: orange">This bind is not part of the appdata. Are you sure that a backup is necessary?</p>';
+                        }
+                    ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            <?php foreach($backups as $backup): ?>
+            <tr class="wrapper block2-<?=$key?>" style="display: none;">
+                <td style="width: 10px; text-align:center;"></td>
+                <td colspan="3">
+                    <?php
+                        $filterd = array_filter($timeranges, function ($e) use($backup) {
+                            return $backup['TimestampUnix'] <= $e['end'] && $backup['TimestampUnix'] >= $e['start'];
+                        });
+                        $filterd = array_values($filterd);
+
+                        if(count($filterd) > 0) {
+                            echo ' <span class="tag fl '.$filterd[0]['type'].'" style="margin-right: 10px;">' . _(LANG_GUI_BACKUPTIMES[$filterd[0]['type']]) . '</span>';
+                        }
+                    ?>
+                    <?=date(LANG_GUI_DATETIMEFORMAT, $backup['TimestampUnix']);?> - <?=$backup['BackupType']?>
+                </td>
+                <td style="text-align: right;"><?=convertSize($backup['Size'])?></td>
+                <td style="text-align: right;">
+                    <?php if(is_file($backup['FullPath'])): ?>
+                    <button 
+                        onclick="deleteBackup('<?=$backup['FullPath']?>');"
+                    ><?=_(LANG_GUI_BTN_DELETE)?></button>
+                    <?php endif; ?>
+                    <button
+                        disabled
+                        onclick="return true;"
+                        class="view3_btn_restore_<?=$container->id?>"
+                    ><?=_(LANG_GUI_BTN_RESTORE)?></button>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</form>
+<button onClick="save_container_ignore_backup()"><?=_(LANG_GUI_BTN_SAVE)?></button>

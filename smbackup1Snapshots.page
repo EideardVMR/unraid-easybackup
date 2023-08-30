@@ -1,0 +1,334 @@
+Menu="smbackup:1"
+Title="Snapshot Manager"
+Icon="clone"
+---
+
+<?php
+
+require_once '/usr/local/emhttp/plugins/smbackup/includes/loader.php';
+
+if ($var['fsState'] != "Started") {
+    echo "<div class='notice shift'>"._(LANG_GUI_NOTE_ARRAY_OFFLINE).".</div>";
+    exit;
+} elseif (!is_file('/var/run/libvirt/libvirtd.pid') || (!is_dir('/proc/'.@file_get_contents('/var/run/libvirt/libvirtd.pid')))) {
+    echo "<div class='notice shift'>"._(LANG_GUI_NOTE_VMSERVICE_FAILED).".</div>";
+    exit;
+}
+
+$libvirt_running = trim(shell_exec( "[ -f /proc/`cat /var/run/libvirt/libvirtd.pid 2> /dev/null`/exe ] && echo 'yes' || echo 'no' 2> /dev/null" ));
+if($libvirt_running != 'yes') {
+    echo "<div class='notice shift'>"._(LANG_GUI_NOTE_VMSERVICE_STOPPED).".</div>";
+    exit;
+}
+
+$kvm = new KVM();
+$vms = $kvm->getVMs();
+
+?>
+<style>
+    .wrapper {
+        transition:height 1s ease-out;
+        height:0;
+        overflow:hidden;
+    }
+
+    span.tag {
+        background-color: gray;
+        border-radius: 10px;
+        color: #000;
+        padding: 5px;
+    }
+    span.tag.fl {
+        width: 50px;
+        display: inline-block;
+        text-align: center;
+    }
+    span.tag.green {
+        background-color: green;
+        color: #FFF;
+    }
+    span.tag.orange {
+        background-color: #fff6bf;
+        color: #000;
+    }
+    button:disabled {
+        cursor: not-allowed !important;
+    }
+    span.tag.day {
+        background-color: #c0feca;
+        color: #000;
+    }
+    span.tag.week {
+        background-color: #bfebff;
+        color: #000;
+    }
+    span.tag.month {
+        background-color: #ffbffe;
+        color: #000;
+    }
+    span.tag.year {
+        background-color: #ffbfbf;
+        color: #000;
+    }
+</style>
+
+<div style="background-color: #fff6bf; border: 1px solid #ffd324; padding: 10px; margin-bottom: 30px;">
+    <?=_(LANG_GUI_SECURITYNOTE_SNAPSHOT)?>
+</div>
+
+<table class="disk_status wide">
+    <thead>
+        <tr>
+            <td style="width:100%"><?=_(LANG_GUI_TABLE_COL_NAME)?></td>
+            <td><?=_(LANG_GUI_TABLE_COL_ACTIONS)?></td>
+        </tr>
+    </thead>
+    <tbody>
+        <?php 
+            foreach($vms as $key => $vm): 
+                $backups = $vm->getStoredBackups();
+                $backup_size = 0;
+                foreach($backups as $backup) {
+                    $backup_size += $backup['Size'];
+                }
+        ?>
+        <tr style="background-color: #272927;">
+            <td style="color: #486dba;">
+                <i 
+                    id="view1_icon_start_<?=$vm->uuid?>" 
+                    class="fa fa-play green" 
+                    style="display: none;"></i>
+                <i 
+                    id="view1_icon_stop_<?=$vm->uuid?>" 
+                    class="fa fa-stop red"></i>
+
+                <?=$vm->name?>
+
+                <button 
+                    onclick="stopVM('<?=$vm->name?>')" 
+                    id="view1_btn_stop_<?=$vm->uuid?>" 
+                    style="display: none;"><?=_(LANG_GUI_BTN_STOP)?></button>
+                <button 
+                    disabled 
+                    onclick="startVM('<?=$vm->name?>')" 
+                    id="view1_btn_start_<?=$vm->uuid?>"><?=_(LANG_GUI_BTN_START)?></button>
+
+                <span 
+                    style="color: red; display: none;" 
+                    id="view1_text_running_<?=$vm->uuid?>">backup is running</span>
+                <span 
+                    style="color: red; display: none;" 
+                    id="view1_text_runningtime_<?=$vm->uuid?>">[time]</span>
+            </td>
+            <td style="text-align: right;">
+                <button 
+                    disabled 
+                    id="view1_btn_createsnap_<?=$vm->uuid?>"
+                    onclick="createSnapshot('<?=$vm->name?>')"><?=LANG_GUI_BTN_CREATE_SNAP?></button>
+            </td>
+        </tr>
+        <?php foreach($vm->disks as $disk): ?>
+        <tr>
+            <td style="padding-left: 40px;">
+                <?=$disk['Source']?> 
+                <?=($disk['PreSource'] !== null ? '<span class="tag orange">Snapshot</span>' : '')?>
+            </td>
+            <td style="text-align: right;"></td>
+        </tr>
+        <?php 
+            if($disk['PreSource'] !== null):
+                foreach($disk['PreSource'] as $key => $predisk): 
+        ?>
+        <tr>
+            <td style="padding-left: 80px;">
+                <?=$predisk?> 
+                <?=($key < (count($disk['PreSource']) -1) ? '<span class="tag orange">' . _(LANG_GUI_SNAPSHOT) . '</span>' : '')?>
+                <?=($key == (count($disk['PreSource']) -1) ? '<span class="tag green">' . _(LANG_GUI_ORIGINAL) . '</span>' : '')?>
+            </td>
+            <td style="text-align: right;">
+                <?php
+                    $pi = pathinfo($predisk);
+                    $extension = $pi['extension'];
+                    if($key == count($disk['PreSource'])-1 ) {
+                        $extension = 'original';
+                    }
+                ?>
+                <button 
+                    disabled 
+                    class="view1_btn_commit_<?=$vm->uuid?>"
+                    onclick="commitSnapshot('<?=$vm->name?>', '<?=$disk['Target']?>', '<?=$extension?>')"
+                ><?=sprintf(LANG_GUI_BTN_COMMIT_SNAP, $extension)?></button>
+
+                <button 
+                    disabled 
+                    class="view1_btn_revert_<?=$vm->uuid?>"
+                    onclick="revertSnapshot('<?=$vm->name?>', '<?=$extension?>')"
+                ><?=LANG_GUI_BTN_REVERT_SNAP?></button>
+            </td>
+        </tr>
+        <?php 
+                endforeach; 
+            endif;
+        ?>
+        <?php endforeach; ?>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>
+
+<script>
+
+    function createSnapshot(vm) {
+        loading_view1(true);
+
+        $.post('/plugins/smbackup/actions.php', {action: 'create_snap', vm: vm}, (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view1(false);
+        });
+    }
+    
+    function commitSnapshot(vm, target, to) {
+        loading_view1(true);
+
+        $.post('/plugins/smbackup/actions.php', {action: 'commit_snap', vm: vm, target: target, to: to}, (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view1(false);
+        });
+    }
+    
+    function revertSnapshot(vm, to) {
+        loading_view1(true);
+
+        $.post('/plugins/smbackup/actions.php', {action: 'revert_snap', vm: vm, to: to}, (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view1(false);
+        });
+    }
+    
+    function startVM(vm) {
+        loading_view1(true);
+
+        $.post('/plugins/smbackup/actions.php', {action: 'startvm', vm: vm}, (data) => {
+            if(data == 'OK') {
+                loading_view1(false);
+            }
+        });
+    }
+    
+    function stopVM(vm) {
+        loading_view1(true);
+
+        $.post('/plugins/smbackup/actions.php', {action: 'stopvm', vm: vm}, (data) => {
+            if(data == 'OK') {
+                loading_view1(false);
+            }
+        });
+    }
+
+    function loading_view1(type) {
+        if(type) {
+            $('#spinnerbg_view1').css('display', 'block');
+            $('#spinner_view1').css('display', 'block');
+        } else {
+            $('#spinnerbg_view1').css('display', 'none');
+            $('#spinner_view1').css('display', 'none');
+        }
+    }
+
+    function toggle_block(id){
+        $('.' + id).toggle();
+    }
+
+    var vm_state = [];
+    
+    // Daten laden
+    setInterval(() => {
+        $.get('/plugins/smbackup/status.php?type=jobs', (data) => {
+            data = JSON.parse(data);
+            console.log(data);
+            vm_state = data.vms;
+        });
+
+    }, 1000);
+
+    setInterval(() => {
+        $.each(vm_state,(i, e) => {
+
+            if(e.state == 'running') {
+                $('#view1_btn_start_' + e.id).hide();
+                $('#view1_btn_stop_' + e.id).show();
+                $('#view1_icon_start_' + e.id).show();
+                $('#view1_icon_stop_' + e.id).hide();
+            } else if(e.state == 'shut off') {
+                $('#view1_btn_start_' + e.id).show();
+                $('#view1_btn_stop_' + e.id).hide();
+                $('#view1_icon_start_' + e.id).hide();
+                $('#view1_icon_stop_' + e.id).show();
+            } else {
+                $('#view1_btn_start_' + e.id).hide();
+                $('#view1_btn_stop_' + e.id).hide();
+                $('#view1_icon_start_' + e.id).hide();
+                $('#view1_icon_stop_' + e.id).show();
+            }
+
+            if(e.job_type === 'backup' || e.job_type === 'restore') {
+                $('#view1_text_running_' + e.id).show();
+                $('#view1_text_runningtime_' + e.id).show();
+                $('#view1_text_runningtime_' + e.id).html(e.job_timediff_iso);
+                $('#view1_btn_createsnap_' + e.id).prop('disabled', true);
+                $('#view1_btn_stop_' + e.id).prop('disabled', true);
+                $('#view1_btn_start_' + e.id).prop('disabled', true);
+                $('.view1_btn_commit_' + e.id).prop('disabled', true);
+                $('.view1_btn_revert_' + e.id).prop('disabled', true);
+            } else {
+                $('#view1_text_running_' + e.id).hide();
+                $('#view1_text_runningtime_' + e.id).hide();
+                $('#view1_btn_createsnap_' + e.id).prop('disabled', false);
+                $('#view1_btn_stop_' + e.id).prop('disabled', false);
+                $('#view1_btn_start_' + e.id).prop('disabled', false);
+                
+                if(e.state == 'running') {
+                    $('.view1_btn_commit_' + e.id).prop('disabled', false);
+                } else {
+                    $('.view1_btn_commit_' + e.id).prop('disabled', true);
+                }
+
+                if(e.state == 'shut off') {
+                    $('.view1_btn_revert_' + e.id).prop('disabled', false);
+                } else {
+                    $('.view1_btn_revert_' + e.id).prop('disabled', true);
+                }
+
+            }
+
+        });
+    }, 1000);
+
+</script>
+
+<div id="spinnerbg_view1" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.5); z-index: 6000; display: none;"></div>
+<div id="spinner_view1" class="spinner fixed" style="display:none">
+    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 133.52 76.97" class="unraid_mark">
+        <defs>
+            <linearGradient id="unraid_logo" x1="23.76" y1="81.49" x2="109.76" y2="-4.51" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#e32929"></stop>
+                <stop offset="1" stop-color="#ff8d30"></stop>
+            </linearGradient>
+        </defs>
+        <path d="m70,19.24zm57,0l6.54,0l0,38.49l-6.54,0l0,-38.49z" fill="url(#unraid_logo)" class="unraid_mark_9"></path>
+        <path d="m70,19.24zm47.65,11.9l-6.55,0l0,-23.79l6.55,0l0,23.79z" fill="url(#unraid_logo)" class="unraid_mark_8"></path>
+        <path d="m70,19.24zm31.77,-4.54l-6.54,0l0,-14.7l6.54,0l0,14.7z" fill="url(#unraid_logo)" class="unraid_mark_7"></path>
+        <path d="m70,19.24zm15.9,11.9l-6.54,0l0,-23.79l6.54,0l0,23.79z" fill="url(#unraid_logo)" class="unraid_mark_6"></path>
+        <path d="m63.49,19.24l6.51,0l0,38.49l-6.51,0l0,-38.49z" fill="url(#unraid_logo)" class="unraid_mark_5"></path>
+        <path d="m70,19.24zm-22.38,26.6l6.54,0l0,23.78l-6.54,0l0,-23.78z" fill="url(#unraid_logo)" class="unraid_mark_4"></path>
+        <path d="m70,19.24zm-38.26,43.03l6.55,0l0,14.73l-6.55,0l0,-14.73z" fill="url(#unraid_logo)" class="unraid_mark_3"></path>
+        <path d="m70,19.24zm-54.13,26.6l6.54,0l0,23.78l-6.54,0l0,-23.78z" fill="url(#unraid_logo)" class="unraid_mark_2"></path>
+        <path d="m70,19.24zm-63.46,38.49l-6.54,0l0,-38.49l6.54,0l0,38.49z" fill="url(#unraid_logo)" class="unraid_mark_1"></path>
+    </svg>
+</div>

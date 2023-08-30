@@ -1,0 +1,264 @@
+Menu="smbackup:2"
+Title="Backup VMs"
+Icon="clone"
+---
+
+<?php
+
+if ($var['fsState'] != "Started") {
+    echo "<div class='notice shift'>"._(LANG_GUI_NOTE_ARRAY_OFFLINE).".</div>";
+    exit;
+} elseif (!is_file('/var/run/libvirt/libvirtd.pid') || (!is_dir('/proc/'.@file_get_contents('/var/run/libvirt/libvirtd.pid')))) {
+    echo "<div class='notice shift'>"._(LANG_GUI_NOTE_VMSERVICE_FAILED).".</div>";
+    exit;
+}
+
+$libvirt_running = trim(shell_exec( "[ -f /proc/`cat /var/run/libvirt/libvirtd.pid 2> /dev/null`/exe ] && echo 'yes' || echo 'no' 2> /dev/null" ));
+if($libvirt_running != 'yes') {
+    echo "<div class='notice shift'>"._(LANG_GUI_NOTE_VMSERVICE_STOPPED).".</div>";
+    exit;
+}
+
+$timeranges = CreateTimeranges();
+
+?>
+
+<div class="title">
+    <span class="left"><?=LANG_GUI_HEADER_BACKUPS?></span>
+</div>
+
+<form action="" id="vm_ignore_form" onsubmit="return false;">
+    <input type="hidden" name="action" value="ignore_vms">
+    <?php if(!Config::$ENABLE_VM_BACKUP): ?>
+
+        <div class='notice shift'><?=_(LANG_GUI_SECURITYNOTE_VMBACKUPDISABLED)?></div>
+
+    <?php endif; ?>
+    <table class="disk_status wide">
+        <thead>
+            <tr>
+                <td style="width: 10px; text-align:center;"><?=_(LANG_GUI_TABLE_COL_DISABLE)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_NAME)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_LASTBACKUP)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_BACKUPCOUNT)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_BACKUPSIZE)?></td>
+                <td><?=_(LANG_GUI_TABLE_COL_ACTIONS)?></td>
+            </tr>
+        </thead>
+        <tbody>
+            <?php 
+                foreach($vms as $key => $vm): 
+                    $backups = $vm->getStoredBackups();
+                    $backup_size = 0;
+                    $last_backup = 'never';
+
+                    if(count($backups)>0) {
+                        $backups[array_key_last($backups)]['Timestamp'];
+                    }
+
+                    foreach($backups as $backup) {
+                        $backup_size += $backup['Size'];
+                    }
+            ?>
+            <tr>
+                <td style="width: 10px; text-align:center;">
+                    <input 
+                        type="checkbox" 
+                        name="disable_vm[]" 
+                        value="<?=$vm->name?>" <?= (in_array($vm->name, Config::$VM_IGNORE_VMS) ? 'checked' : '') ?>>
+                </td>
+                <td>
+                    <a href="#" onclick="toggle_block('block-<?=$key?>');"><?=$vm->name?></a>
+
+                    <span 
+                        style="color: red; display: none;" 
+                        id="view2_text_running_<?=$vm->uuid?>">backup is running</span>
+                    <span 
+                        style="color: red; display: none;" 
+                        id="view2_text_runningtime_<?=$vm->uuid?>">[time]</span>
+                </td>
+                <td><?=$last_backup?></td>
+                <td><?=count($backups)?></td>
+                <td><?=convertSize($backup_size)?></td>
+                <td>
+                    <button 
+                        disabled
+                        id="view2_btn_backupnow_<?=$vm->uuid?>" 
+                        onclick="backupnow_vm('<?=$vm->name?>')" 
+                    ><?=_(LANG_GUI_BTN_BACKUPNOW)?></button></td>
+            </tr>
+            <?php foreach($backups as $backup): ?>
+            <tr class="wrapper block-<?=$key?>" style="display: none;">
+                <td style="width: 10px; text-align:center;"></td>
+                <td colspan="3">
+                    <?php
+                        $filterd = array_filter($timeranges, function ($e) use($backup) {
+                            return $backup['TimestampUnix'] <= $e['end'] && $backup['TimestampUnix'] >= $e['start'];
+                        });
+                        $filterd = array_values($filterd);
+
+                        if(count($filterd) > 0) {
+                            echo ' <span class="tag fl '.$filterd[0]['type'].'" style="margin-right: 10px;">' . _(LANG_GUI_BACKUPTIMES[$filterd[0]['type']]) . '</span>';
+                        }
+                    ?>
+                    <?=date(LANG_GUI_DATETIMEFORMAT, $backup['TimestampUnix']);?> - <?=$backup['BackupType']?>
+                </td>
+                <td style="text-align: right;"><?=convertSize($backup['Size'])?></td>
+                <td style="text-align: right;">
+                    <?php if(is_file($backup['FullPath'])): ?>
+                    <button 
+                        onclick="deleteBackup('<?=$backup['FullPath']?>');"
+                    ><?=_(LANG_GUI_BTN_DELETE)?></button>
+                    <?php endif; ?>
+                    <button
+                        disabled
+                        onclick="return true;"
+                        class="view2_btn_restore_<?=$vm->uuid?>"
+                    ><?=_(LANG_GUI_BTN_RESTORE)?></button>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</form>
+<button onClick="save_ignore_backup()"><?=_(LANG_GUI_BTN_SAVE)?></button>
+
+<div class="title">
+    <span class="left"><?=LANG_GUI_HEADER_SETTINGS?></span>
+</div>
+
+<div style="display: flex; justify-content:center;">
+    <div>
+        <form action="" id="vm_setting_form">
+            <input type="hidden" name="action" value="vm_settings">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Enable Backups:</td>
+                        <td>
+                            <select name="vm_enable" id="">
+                                <option value="true" <?= (Config::$ENABLE_VM_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                                <option value="false" <?= (!Config::$ENABLE_VM_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Backup location:</td>
+                        <td>
+                            <input 
+                                type="text" 
+                                id="backup_location" 
+                                name="backup_location" 
+                                value="<?=Config::$VM_BACKUP_PATH?>" 
+                                placeholder="Select a backup location" 
+                            >
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+        <button onClick="save_settings()"><?=_(LANG_GUI_BTN_SAVE)?></button>
+    </div>
+</div>
+
+<script>
+
+    function save_ignore_backup(){
+        loading_view2(true);
+        $.post('/plugins/smbackup/actions.php', $("#vm_ignore_form").serialize(), (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view2(false);
+        });
+    };
+
+    function save_settings() {
+        loading_view2(true);
+        $.post('/plugins/smbackup/actions.php', $("#vm_setting_form").serialize(), (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view2(false);
+        });
+    };
+
+    function deleteBackup(file){
+        if(confirm('<?=_(LANG_GUI_TOOLTIP_DELETE_SHURE)?>')){
+            loading_view2(true);
+            $.post('/plugins/smbackup/actions.php', {action: 'delete', file: file}, (data) => {
+                if(data == 'OK') {
+                    location.reload();
+                }
+                loading_view2(false);
+            });
+        }
+    }
+
+    function backupnow_vm(vm){
+        loading_view2(true);
+        $.post('/plugins/smbackup/actions.php', {action: 'backupnow_vm', vm: vm}, (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view2(false);
+        });
+        
+    }
+
+    function loading_view2(type) {
+        if(type) {
+            $('#spinnerbg_view2').css('display', 'block');
+            $('#spinner_view2').css('display', 'block');
+        } else {
+            $('#spinnerbg_view2').css('display', 'none');
+            $('#spinner_view2').css('display', 'none');
+        }
+    }
+
+    setInterval(() => {
+        $.each(vm_state,(i, e) => {
+
+            if(e.job_type === 'backup') {
+                $('#view2_text_running_' + e.id).show();
+                $('#view2_text_runningtime_' + e.id).show();
+                $('#view2_text_runningtime_' + e.id).html(e.job_timediff_iso);
+                $('#view2_btn_backupnow_' + e.id).prop('disabled', true);
+            } else {
+                $('#view2_text_running_' + e.id).hide();
+                $('#view2_text_runningtime_' + e.id).hide();
+                $('#view2_btn_backupnow_' + e.id).prop('disabled', false);
+            }
+
+            if(e.state != 'shut off' || e.job_type === 'backup' || e.job_type === 'restore') {
+                $('.view2_btn_restore_' + e.id).prop('disabled', true);
+            } else {
+                $('.view2_btn_restore_' + e.id).prop('disabled', false);
+            }
+
+        });
+    }, 1000);
+
+</script>
+
+<div id="spinnerbg_view2" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.5); z-index: 6000; display: none;"></div>
+<div id="spinner_view2" class="spinner fixed">
+    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 133.52 76.97" class="unraid_mark">
+        <defs>
+            <linearGradient id="unraid_logo" x1="23.76" y1="81.49" x2="109.76" y2="-4.51" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#e32929"></stop>
+                <stop offset="1" stop-color="#ff8d30"></stop>
+            </linearGradient>
+        </defs>
+        <path d="m70,19.24zm57,0l6.54,0l0,38.49l-6.54,0l0,-38.49z" fill="url(#unraid_logo)" class="unraid_mark_9"></path>
+        <path d="m70,19.24zm47.65,11.9l-6.55,0l0,-23.79l6.55,0l0,23.79z" fill="url(#unraid_logo)" class="unraid_mark_8"></path>
+        <path d="m70,19.24zm31.77,-4.54l-6.54,0l0,-14.7l6.54,0l0,14.7z" fill="url(#unraid_logo)" class="unraid_mark_7"></path>
+        <path d="m70,19.24zm15.9,11.9l-6.54,0l0,-23.79l6.54,0l0,23.79z" fill="url(#unraid_logo)" class="unraid_mark_6"></path>
+        <path d="m63.49,19.24l6.51,0l0,38.49l-6.51,0l0,-38.49z" fill="url(#unraid_logo)" class="unraid_mark_5"></path>
+        <path d="m70,19.24zm-22.38,26.6l6.54,0l0,23.78l-6.54,0l0,-23.78z" fill="url(#unraid_logo)" class="unraid_mark_4"></path>
+        <path d="m70,19.24zm-38.26,43.03l6.55,0l0,14.73l-6.55,0l0,-14.73z" fill="url(#unraid_logo)" class="unraid_mark_3"></path>
+        <path d="m70,19.24zm-54.13,26.6l6.54,0l0,23.78l-6.54,0l0,-23.78z" fill="url(#unraid_logo)" class="unraid_mark_2"></path>
+        <path d="m70,19.24zm-63.46,38.49l-6.54,0l0,-38.49l6.54,0l0,38.49z" fill="url(#unraid_logo)" class="unraid_mark_1"></path>
+    </svg>
+</div>
