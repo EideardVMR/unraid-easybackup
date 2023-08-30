@@ -265,6 +265,7 @@ $vms = $kvm->getVMs();
                 $('#view1_btn_stop_' + e.id).show();
                 $('#view1_icon_start_' + e.id).show();
                 $('#view1_icon_stop_' + e.id).hide();
+                $('#view1_btn_createsnap_' + e.id).prop('disabled', false);
             } else if(e.state == 'shut off') {
                 $('#view1_btn_start_' + e.id).show();
                 $('#view1_btn_stop_' + e.id).hide();
@@ -289,7 +290,6 @@ $vms = $kvm->getVMs();
             } else {
                 $('#view1_text_running_' + e.id).hide();
                 $('#view1_text_runningtime_' + e.id).hide();
-                $('#view1_btn_createsnap_' + e.id).prop('disabled', false);
                 $('#view1_btn_stop_' + e.id).prop('disabled', false);
                 $('#view1_btn_start_' + e.id).prop('disabled', false);
                 
