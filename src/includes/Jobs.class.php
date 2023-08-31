@@ -88,6 +88,18 @@ class Jobs {
 
     }
 
+    static function getByID(string $category, $id){
+        
+        self::load();
+
+        $tmp = array_filter(self::$$category, function ($a) use ($id) {
+            return $a['id'] == $id;
+        });
+
+        return array_values($tmp);
+        
+    }
+
     static function getAll(){
         self::load();
         return [
