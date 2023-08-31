@@ -68,7 +68,7 @@ $timeranges = CreateTimeranges();
                         value="<?=$vm->name?>" <?= (in_array($vm->name, Config::$VM_IGNORE_VMS) ? 'checked' : '') ?>>
                 </td>
                 <td>
-                    <a href="#" onclick="toggle_block('block-<?=$key?>');"><?=$vm->name?></a>
+                    <a style="cursor: pointer;" href="javascript: void(0);" onclick="toggle_block('block-<?=$key?>');"><?=$vm->name?></a>
 
                     <span 
                         style="color: red; display: none;" 
