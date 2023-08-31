@@ -730,13 +730,19 @@ class VM {
  
                 } else {
                     Log::LogWarning('VM: Compression "'. Config::$COMPRESS_TYPE .'" is not supported');
+                    sleep(30);
+                    $this->commitSnapshot($snapshot_commit);
+                    sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
+                    Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
+                    return false;
                 }
 
+                Log::LogDebug('VM: End Backup');
                 sleep(30);
                 $this->commitSnapshot($snapshot_commit);
-                sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
+                sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name), 'normal');
                 Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                return false;
+                return true;
 
             // Backup ohne Kompression
             } else {
@@ -771,7 +777,7 @@ class VM {
             sleep(30);
             $this->commitSnapshot($snapshot_commit);
             sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name));
-            Jobs::remove(JobCategory::VM, 'backup', 'backup_vm_' . $this->uuid);
+            Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
             return true;
 
         // Backup erstellen OHNE Snapshot
@@ -920,9 +926,10 @@ class VM {
 
             }
 
+            Log::LogDebug('VM: End Backup');
             // Benachrichtigung senden
             sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name));
-            Jobs::remove(JobCategory::VM, 'backup', 'backup_vm_' . $this->uuid);
+            Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
             return true;
 
         }
