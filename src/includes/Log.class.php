@@ -7,11 +7,11 @@ class Log {
         self::Write(3, $msg);
     }
 
-    static function LogInfo($msg) {
+    static function LogWarning($msg) {
         self::Write(2, $msg);
     }
 
-    static function LogWarning($msg) {
+    static function LogInfo($msg) {
         self::Write(1, $msg);
     }
 
