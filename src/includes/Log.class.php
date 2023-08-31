@@ -23,10 +23,10 @@ class Log {
         if(Config::$LOG_LEVEL > $level) { return; }
 
         switch($level) {
-            case 0: $type = ' DEBUG '; break;
-            case 1: $type = ' INFO  '; break;
-            case 2: $type = ' WARN  '; break;
-            case 3: $type = ' ERROR '; break;
+            case 0: $type = ' DEBUG    '; break;
+            case 1: $type = ' INFO     '; break;
+            case 2: $type = ' WARNING  '; break;
+            case 3: $type = ' ERROR    '; break;
         }
 
         $msg = date('Y-m-d H:i:s') . $type . $msg . "\r\n";
