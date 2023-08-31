@@ -33,6 +33,7 @@ class Jobs {
             'time' => time()            
         ];
 
+        Log::LogDebug('Add job in category "' . $category . '" with id "' . $id . '"');
         self::save();
 
     }
@@ -64,6 +65,7 @@ class Jobs {
 
         }
 
+        Log::LogDebug('Remove job from category "' . $category . '" with id "' . $id . '"');
         self::save();
 
     }
@@ -97,7 +99,7 @@ class Jobs {
         });
 
         return array_values($tmp);
-        
+
     }
 
     static function getAll(){
@@ -112,6 +114,7 @@ class Jobs {
     private static function load() {
         
         if(self::$loaded) { return; }
+        Log::LogDebug('Load jobs from "' . Config::$JOB_CACHE . '"');
 
         if(CheckFilesExists(Config::$JOB_CACHE)) {
 
@@ -136,6 +139,8 @@ class Jobs {
     }
 
     private static function save() {
+        
+        Log::LogDebug('Save jobfile: ' . Config::$JOB_CACHE);
         file_put_contents(Config::$JOB_CACHE, json_encode(
             [
                 JobCategory::VM => self::$vms,
