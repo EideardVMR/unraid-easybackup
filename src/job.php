@@ -12,7 +12,7 @@ if(($argv[1] ?? '') == 'backup') {
 
             if($vm->name == ($argv[3] ?? '')) {
 
-                $vm->createBackup();
+                $vm->createBackup(true);
 
             }
 
@@ -28,7 +28,7 @@ if(($argv[1] ?? '') == 'backup') {
 
             if($container->name == ($argv[3] ?? '')) {
 
-                $container->createBackup();
+                $container->createBackup(true);
 
             }
 

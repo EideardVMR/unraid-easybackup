@@ -7,7 +7,6 @@ Icon="clone"
 
 $docker = new Docker();
 $container_list = $docker->getContainers();
-
 ?>
 
 <form action="" id="container_ignore_form" onsubmit="return false;">
@@ -71,7 +70,6 @@ $container_list = $docker->getContainers();
                 <td><?=convertSize($backup_size)?></td>
                 <td>
                     <button 
-                        disabled
                         id="view3_btn_backupnow_<?=$container->id?>" 
                         onclick="backupnow_container('<?=$container->name?>')" 
                     ><?=_(LANG_GUI_BTN_BACKUPNOW)?></button></td>
@@ -211,7 +209,7 @@ $container_list = $docker->getContainers();
         loading_view2(true);
         $.post('/plugins/smbackup/actions.php', {action: 'backupnow_container', container: container}, (data) => {
             if(data == 'OK') {
-                location.reload();
+                //location.reload();
             }
             loading_view2(false);
         });
@@ -229,7 +227,7 @@ $container_list = $docker->getContainers();
     }
 
     setInterval(() => {
-        $.each(vm_state,(i, e) => {
+        $.each(container_state,(i, e) => {
 
             if(e.job_type === 'backup') {
                 $('#view3_text_running_' + e.id).show();

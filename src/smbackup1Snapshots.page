@@ -246,6 +246,7 @@ $vms = $kvm->getVMs();
     }
 
     var vm_state = [];
+    var container_state = [];
     
     // Daten laden
     setInterval(() => {
@@ -253,6 +254,7 @@ $vms = $kvm->getVMs();
             data = JSON.parse(data);
             console.log(data);
             vm_state = data.vms;
+            container_state = data.container;
         });
 
     }, 1000);

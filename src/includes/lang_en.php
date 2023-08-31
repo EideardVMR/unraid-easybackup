@@ -67,7 +67,14 @@ define('LANG_NOTIFY_FILE_RECYCLE_SUCCESS','File is recycled<br>%s');
 define('LANG_NOTIFY_FILE_RECYCLE_FAILED','Recycle file failed<br>%s');
 define('LANG_NOTIFY_START_BACKUP_VM','Backup VM %s is started.');
 define('LANG_NOTIFY_END_BACKUP_VM','Backup VM %s is completed.');
+define('LANG_NOTIFY_START_BACKUP_CONTAINER','Backup container %s is started.');
+define('LANG_NOTIFY_END_BACKUP_CONTAINER','Backup container %s is completed.');
 define('LANG_NOTIFY_FAILED_BACKUP_VM','Backup VM %s was failed<br>%s.');
+define('LANG_NOTIFY_FAILED_BACKUP_CONTAINER','Backup container %s was failed<br>%s.');
+
+// Nachrichten
+define('LAMG_MSG_CONTAINER_TIMEOUT_FOR_START', 'Start container timeout');
+define('LAMG_MSG_CONTAINER_TIMEOUT_FOR_STOP', 'Stop container timeout');
 
 // Tooltips
 define('LANG_GUI_TOOLTIP_SHUTDOWN_BEFORE_REVERT', 'Shutdown VM before revert snapshot');

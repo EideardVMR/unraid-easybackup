@@ -9,30 +9,78 @@ class Container {
     public $icon = '';
     public $state = '';
 
-    function __construct($client)
+    function __construct()
     {
-        $this->client = $client;
+
+    }
+
+    function getClient() {
+        if($this->client === null) {
+            $this->client = new DockerClient('/var/run/docker.sock');
+        }
+
+        return $this->client;
     }
 
     public function startContainer(){
 
+        Log::LogDebug('Container: Start Container "' . $this->name . '"');
+        $this->client = new DockerClient('/var/run/docker.sock');
         $response = $this->client->dispatchCommand('/containers/' . $this->id . '/start', []);
+        Log::LogInfo(print_r($response, true));
 
     }
 
     public function stopContainer(){
         
+        Log::LogDebug('Container: Stop Container "' . $this->name . '"');
+        $this->client = new DockerClient('/var/run/docker.sock');
         $response  = $this->client->dispatchCommand('/containers/' . $this->id . '/stop', []);
-
+        Log::LogInfo(print_r($response, true));
     }    
 
     public function loadInformations(){
 
-        $container = $this->client->dispatchCommand('/containers/'.$this->id.'/json');
-        $this->mounts = $container['Mounts'];
-        $this->icon = $container['Labels']['net.unraid.docker.icon'] ?? null;
-        $this->state = $container['State']['Status'];
+        Log::LogDebug('Container: Load informations of "' . $this->name . '"');
 
+        $this->client = new DockerClient('/var/run/docker.sock');
+        $dockerContainers  = $this->client->dispatchCommand('/containers/json?all=1');
+        foreach($dockerContainers as $dc) {
+            if(($dc['Id'] ?? null) == $this->id) {
+                $this->mounts = $dc['Mounts'];
+                $this->icon = $dc['Labels']['net.unraid.docker.icon'] ?? null;
+                $this->state = $dc['State'];
+                Log::LogDebug('Container: Informations of "' . $this->name . '" found');
+                return true;
+            }
+        }
+        
+        Log::LogError('Container: Informations of "' . $this->name . '" not found.');
+        Log::LogError(print_r($dockerContainers, true));
+        return false;
+
+        /*
+        # Dieser Part sollte eigentlich funtionieren, aber ich erhalte immer "Page not Found"
+        # Fehler wurde noch nicht gefunden!
+        
+        $this->client = new DockerClient('/var/run/docker.sock');
+        $container = $this->client->dispatchCommand('/containers/'.$this->id.'/json');
+
+        if(
+            $container['Mounts'] ?? true ||
+            $container['Labels']['net.unraid.docker.icon'] ?? true ||
+            $container['State']['Status'] ?? true
+        ) {
+            Log::LogError('Container: Load Informations failed by "'.$this->name.'"');
+            return false;
+        }
+        
+        $this->mounts = $container['Mounts'] ?? [];
+        $this->icon = $container['Labels']['net.unraid.docker.icon'] ?? null;
+        $this->state = $container['State']['Status'] ?? 'unknown';
+        Log::LogDebug('Container: Informations of "' . $this->name . '" found');
+        return true;
+        */
     }
 
     /**
@@ -88,11 +136,22 @@ class Container {
         return $output;
     }
 
-    public function createBackup() {
+    public function createBackup($notify = false) {
 
         Log::LogDebug('Container: Start Backup "' . $this->name . '"');
 
+        if($notify) {
+            sendNotification(sprintf(LANG_NOTIFY_START_BACKUP_CONTAINER, $this->name), 'normal');
+        }
+
         $was_running = false;
+
+        if(Jobs::check(JobCategory::CONTAINER, 'backup', $this->id)) {
+            Log::LogWarning('Container: Aborted Backup of "' . $this->name . '" is running.');
+            return false;
+        }
+
+        Jobs::add(JobCategory::CONTAINER, 'backup', $this->id);
 
         // Backup angehaltenen Docker
         if($this->state == 'running') {
@@ -100,7 +159,6 @@ class Container {
             $was_running = true;
 
             $this->stopContainer();
-            Log::LogInfo('Container: Stop Container "' . $this->name . '"...');
             $timeout = 0;
             do{
                 $this->loadInformations();
@@ -108,9 +166,12 @@ class Container {
                 $timeout++;
                 if($timeout > 30) {
                     Log::LogError('Container: Stop Container "' . $this->name . '" failed. Timeout!');
+                    Jobs::remove(JobCategory::CONTAINER, 'backup', $this->id);if($notify) {
+                        sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_CONTAINER, $this->name, LAMG_MSG_CONTAINER_TIMEOUT_FOR_STOP), 'warning');
+                    }
                     return false;
                 }
-            } while($this->state == 'running');
+            } while($this->state != 'exited');
 
         }
 
@@ -146,8 +207,6 @@ class Container {
 
         }
 
-        #print_debug($copy_files);
-
         $target_path = Config::$APPDATA_BACKUP_PATH . $this->name . '/' . date('Y-m-d_H.i');
 
         if(Config::$COMPRESS_BACKUP) {
@@ -162,9 +221,10 @@ class Container {
             $this->BackupUnCompressed($copy_files, $target_path);
         }
 
+        Jobs::remove(JobCategory::CONTAINER, 'backup', $this->id);
+
         if($was_running) {
 
-            Log::LogInfo('Container: Start Container "' . $this->name . '"...');
             $this->startContainer();
             
             do{
@@ -173,11 +233,21 @@ class Container {
                 $timeout++;
                 if($timeout > 30) {
                     Log::LogError('Container: Start Container "' . $this->name . '" failed. Timeout!');
+                    Jobs::remove(JobCategory::CONTAINER, 'backup', $this->id);
+                    if($notify) {
+                        sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_CONTAINER, $this->name, LAMG_MSG_CONTAINER_TIMEOUT_FOR_START), 'warning');
+                    }
                     return false;
                 }
             } while($this->state != 'running');
 
         }
+
+        if($notify) {
+            sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_CONTAINER, $this->name), 'normal');
+        }
+
+        return true;
 
     }
 
@@ -246,7 +316,7 @@ class Docker {
         $this->containers = [];
         foreach ($dockerContainers as $container) {
             
-            $con = new Container($this->client);
+            $con = new Container();
             $con->name = $container['Name'];
             $con->id = $container['Id'];
             $con->mounts = $container['Mounts'];
