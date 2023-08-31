@@ -2,6 +2,8 @@
 
 require_once '/usr/local/emhttp/plugins/smbackup/includes/loader.php';
 
+Log::$logging = false;
+
 $kvm = new KVM();
 $vms = $kvm->getVMs();
 

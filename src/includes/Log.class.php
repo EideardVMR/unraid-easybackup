@@ -1,6 +1,8 @@
 <?php
 class Log {
 
+    static $logging = true;
+
     static function LogError($msg) {
         self::Write(3, $msg);
     }
@@ -18,6 +20,9 @@ class Log {
     }
 
     static function Write($level, $msg){
+        
+        if(!self::$logging) { return; }
+        
         $type = ' UUUUU ';
 
         if(Config::$LOG_LEVEL > $level) { return; }

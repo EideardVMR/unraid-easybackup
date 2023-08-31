@@ -74,9 +74,14 @@ class VM {
      * @return string|bool false bei einem Fehler ansonsten den XML String 
      */
     public function getXML(bool $force_reload = false) : string|bool {
+        
         if($this->xml === null || $force_reload) {
-            exec('virsh dumpxml "' . $this->name . '"', $xml);
+            $cmd = 'virsh dumpxml "' . $this->name . '"';
+            Log::LogDebug('VM: Load XML: ' . $cmd);
+            exec($cmd, $xml);
             if($xml === "error: failed to get domain '{$this->name}'") {
+                Log::LogError('VM: Loading XML Failed:');
+                Log::LogError(print_r($xml, true));
                 return false;
             }
             $this->xml = implode("\r\n",$xml);
@@ -92,6 +97,7 @@ class VM {
      */
     public function loadUsedDisks() : array {
 
+        Log::LogDebug('VM: Load Disks');
         $this->disks = [];
         $xml = @new SimpleXMLElement($this->getXML(true));
         $disks = $xml->devices->disk;
@@ -125,7 +131,11 @@ class VM {
      * @return void
      */
     public function loadInfo() {
-        exec('virsh dominfo "' . $this->name . '"', $output);
+
+        $cmd = 'virsh dominfo "' . $this->name . '"';
+        Log::LogDebug('VM: Load VM Informations: ' . $cmd);
+        exec($cmd, $output);
+        Log::LogDebug(print_r($output, true));
 
         foreach($output as $key => $o) {
             $ex = explode(':', $o, 2);
@@ -169,8 +179,10 @@ class VM {
      */
     public function createSnapshot() : bool {
 
+        LOG::LogDebug('VM: Start to create snapshot of "' . $this->name . '"');
         if($this->state != VMState::STATE_RUNNING) {
             $this->error = 'VM must be active';
+            LOG::LogInfo('VM: Create snapshot is blocked. VM is not running');
             return false;
         }
 
@@ -182,6 +194,7 @@ class VM {
         foreach($this->disks as $disk) {
             $pi = pathinfo($disk['Source']);
             if($disk['PreSource'] == null) {
+                LOG::LogInfo('VM: Create file: ' . $pi['dirname'] . '/' . $pi['extension'] . '.xml');
                 file_put_contents($pi['dirname'] . '/' . $pi['extension'] . '.xml', $this->getXML(true));
             }
         }
@@ -193,6 +206,7 @@ class VM {
             $info = pathinfo($disk['Source']);
             if($lastdirname !== null) {
                 if($lastdirname !== $info['dirname']) {
+                    LOG::LogWarning("VM: Create snapshot is blocked. Disk are not in the same share.");
                     $this->error = "All image-files must be in the same share";
                     return false;
                 }
@@ -211,11 +225,13 @@ class VM {
             if(count($output_array) == 2) {
                 $snapnumber = $output_array[1]+1;
             }
+            LOG::LogDebug("VM: New Snapshotextension: " . Config::$SNAPSHOT_EXTENSION . $snapnumber);
 
             $targetfile = $info['dirname'] . '/' . $info['filename'] . '.' . Config::$SNAPSHOT_EXTENSION . $snapnumber;
-
+            
             if(file_exists($targetfile)) {
                 $this->error = 'File "' . $targetfile . '" already exists<br>';
+                LOG::LogWarning('VM: File "' . $targetfile . '" already exists');
                 return false;
             }
 
@@ -227,15 +243,21 @@ class VM {
         $targetxml = $lastdirname . '/' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '.xml';
         
         // Snapshot erzeugen
-        exec('virsh snapshot-create-as --domain "' . $this->name . '" --name "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" --disk-only --quiesce --no-metadata', $exec_out);
+        $cmd = 'virsh snapshot-create-as --domain "' . $this->name . '" --name "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" --disk-only --quiesce --no-metadata';
+        exec($cmd, $exec_out);
+        LOG::LogDebug("VM: Create Snapshot: " . $cmd);
         if($exec_out[0] == 'Domain snapshot ' . Config::$SNAPSHOT_EXTENSION . $snapnumber . ' created') {
+            
+            LOG::LogInfo('VM: Snapshot "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" created');
             $this->hasSnapshot = true;
+            
             // Alle Disks neu laden
             $this->loadUsedDisks();
-            #echo $targetxml.'<br>';
-            #var_dump(file_put_contents($targetxml, $this->getXML(true)));
+            
             // XML Datei der neuen Konfiguration ablegen
+            LOG::LogDebug("VM: Create new xml File:" . $targetxml);
             if(!file_put_contents($targetxml, $this->getXML(true))){
+                LOG::LogError('VM: Could not create "' . $targetfile . '".');
                 $this->error = "Failed to create new XML";
                 return false;
             }
@@ -243,8 +265,11 @@ class VM {
             sleep(5);
             $this->lastSnapshotNumber = $snapnumber;
             return true;
+
         }
 
+        Log::LogError('VM: Create Snapshot "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" failed');
+        Log::LogError(print_r($exec_out, true));
         $this->error = "Faild to create Snapshot: " . $exec_out[0];
         return false;
 
@@ -258,12 +283,15 @@ class VM {
      */
     public function commitSnapshot(string $to = 'original') : bool {
         
+        Log::LogDebug('VM: Start to commit snapshot of "' . $this->name . '" to ' . $to);
+
         $xmls = [];
         $commit_to = [];
         $targets = [];
 
         if($this->state != VMState::STATE_RUNNING) {
             $this->error = 'VM must be active';
+            LOG::LogInfo('VM: Commit snapshot is blocked. VM is not running');
             return false;
         }
 
@@ -303,8 +331,11 @@ class VM {
             $command[] = '--pivot';
             $command[] = '--delete';
 
+            Log::LogDebug('VM: Commit Snapshot: ' . join(' ', $command));
             exec(join(' ', $command), $output);
             if($output[1] != 'Successfully pivoted') {
+                Log::LogWarning('VM: Commit failed');
+                Log::LogWarning(print_r($output, true));
                 $errors[] = 'Commit ' . $target . ' failed';
             }
         }
@@ -316,6 +347,7 @@ class VM {
 
         foreach($xmls as $xml) {
             if(file_exists($xml)) {
+                Log::LogInfo('VM: Remove file: ' . $xml);
                 unlink($xml);
             }
         }
@@ -326,6 +358,7 @@ class VM {
             foreach($this->disks as $disk) {
                 $pi = pathinfo($disk['Source']);
                 if($disk['PreSource'] == null) {
+                    Log::LogDebug('VM: Create new XML: ' . $pi['dirname'] . '/' . $pi['extension'] . '.xml');
                     file_put_contents($pi['dirname'] . '/' . $pi['extension'] . '.xml', $this->getXML(true));
                 }
             }
@@ -343,6 +376,8 @@ class VM {
      * @return bool true wenn es geklappt hat, false wenn nicht
      */
     public function revertSnapshot(string $to = 'original') : bool {
+
+        Log::LogDebug('VM: Start to revert snapshot of "' . $this->name . '" to ' . $to);
 
         $this->loadInfo();
         if($this->state != VMState::STATE_STOPPED) {
@@ -370,6 +405,7 @@ class VM {
         }
 
         if($xml_file === null || !file_exists($xml_file)) {
+            Log::LogWarning('VM: XML not found. Revert aborted.');
             $this->error = 'No XML found';
             return false;
         }
@@ -392,20 +428,23 @@ class VM {
         }
 
         $remove_xml = array_unique($remove_xml);
-        #print_debug($xml_file);
-        #print_debug($remove_disks);
-        #print_debug($remove_xml);
 
-        exec('virsh define "' . $xml_file . '"', $output);
+        $cmd = 'virsh define "' . $xml_file . '"';
+        Log::LogDebug('VM: Start to revert snapshot of "' . $this->name . '" to ' . $to);
+        exec($cmd, $output);
         if($output[0] != 'Domain \'' . $this->name . '\' defined from ' . $xml_file . '') {
+            Log::LogWarning('VM: Could not define new XML');
+            Log::LogWarning(print_r($output, true));
             return false;
         }
 
         foreach($remove_disks as $rm) {
+            Log::LogInfo('VM: Remove ' . $rm);
             unlink($rm);
         }
 
         foreach($remove_xml as $rm) {
+            Log::LogInfo('VM: Remove ' . $rm);
             unlink($rm);
         }
 
@@ -420,16 +459,24 @@ class VM {
      * @return bool true wenn es geklappt hat, false wenn nicht
      */
     public function startVM() : bool{
+
+        Log::LogDebug('VM: Start VM "' . $this->name . '"');
         if($this->state == VMState::STATE_RUNNING) { 
+            Log::LogInfo('VM: Start VM "' . $this->name . '" aborted. VM is running.');
             return true;
         }
         if($this->state !== VMState::STATE_STOPPED) { 
             $this->error = "VM can not shutdown from this state";
+            Log::LogInfo('VM: Start VM "' . $this->name . '" aborted. VM is in unsupported State.');
             return false;
         }
 
-        exec('virsh start "' . $this->name . '"', $output);
+        $cmd = 'virsh start "' . $this->name . '"';
+        Log::LogInfo('VM: Start VM: ' . $cmd);
+        exec($cmd, $output);
         if($output[0] != "Domain '" . $this->name . "' started") {
+            Log::LogWarning('VM: Start VM failed');
+            Log::LogWarning(print_r($output, true));
             $this->error = $output[0];
             return false;
         }
@@ -445,16 +492,23 @@ class VM {
      * @return bool true wenn es geklappt hat, false wenn nicht
      */
     public function shutdownVM() : bool{
+        Log::LogDebug('VM: Shutdown VM "' . $this->name . '"');
         if($this->state == VMState::STATE_STOPPED) { 
+            Log::LogInfo('VM: Shutdown VM "' . $this->name . '" aborted. VM is offline.');
             return true;
         }
         if($this->state !== VMState::STATE_RUNNING) { 
             $this->error = "VM can not shutdown from this state";
+            Log::LogInfo('VM: Shutdown VM "' . $this->name . '" aborted. VM is in unsupported State.');
             return false;
         }
 
-        exec('virsh shutdown "' . $this->name . '"', $output);
+        $cmd = 'virsh shutdown "' . $this->name . '"';
+        Log::LogInfo('VM: Shutdown VM: ' . $cmd);
+        exec($cmd, $output);
         if($output[0] != "Domain '" . $this->name . "' is being shutdown") {
+            Log::LogWarning('VM: Shutdown VM failed');
+            Log::LogWarning(print_r($output, true));
             $this->error = $output[0];
             return false;
         }
@@ -470,6 +524,7 @@ class VM {
      * @return array 
      */
     public function getStoredBackups() : array {
+
         $output = [];
         $files = scandir(Config::$VM_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR);
         foreach($files as $file) {
@@ -518,8 +573,10 @@ class VM {
 
     public function createBackup(){
 
+        Log::LogDebug('VM: Start Backup "' . $this->name . '"');
         // Ablehnen wenn VM nicht im definierten Status ist. 
         if($this->state != VMState::STATE_RUNNING && $this->state != VMState::STATE_STOPPED) {
+            Log::LogInfo('VM: Backup can not start in unsupported state. Backup aborted');
             $this->error = "VM must be started or stopped to backup it.";
             return false;
         }
@@ -529,24 +586,30 @@ class VM {
 
         // Prüfen ob der Job bereits läuft.
         if(Jobs::check(JobCategory::VM, 'backup', $this->uuid)) {
+            Log::LogInfo('VM: Backup is running. Backup aborted.');
             $this->error = 'Job is running';
             return true;
         }
 
         // Backuppfad bestimmen
         $target_path = Config::$VM_BACKUP_PATH . $this->name . '/';
+        Log::LogDebug('VM: Backuppath: ' . $target_path);
         if(!CheckFilesExists($target_path)) {
+            Log::LogInfo('VM: Create Backuppath: ' . $target_path);
             mkdir($target_path, 0777, true);
         }
 
         // Backup erstellen mit Snapshot
         if($this->state == VMState::STATE_RUNNING) {
+            
+            Log::LogDebug('VM: Backup of running maschine');
 
             // Informationen commit des Snapshots sammeln
             $snapshot_commit = 'original';
             if($this->lastSnapshotNumber !== null) {
                 $snapshot_commit = Config::$SNAPSHOT_EXTENSION . $this->lastSnapshotNumber;
             }
+            Log::LogDebug('VM: After Backup commit to ' . $snapshot_commit);
 
             // Nachricht senden
             sendNotification(sprintf(LANG_NOTIFY_START_BACKUP_VM, $this->name));
@@ -569,8 +632,6 @@ class VM {
                 }
             }
 
-            print_debug($copy_files);
-
             // Backup mit kompression
             if(Config::$COMPRESS_BACKUP) {
 
@@ -578,6 +639,7 @@ class VM {
                 if(Config::$COMPRESS_TYPE == 'zip') {
 
                     $target_filename = $target_path . date('Y-m-d_H.i') . '.zip';
+                    Log::LogInfo('VM: Compress Backup to Zip: ' . $target_filename);
 
                     $zip = new ZipArchive();
                     if($zip->open($target_filename, ZipArchive::CREATE) !== true) {
@@ -593,8 +655,11 @@ class VM {
                     $fileinfos = [];
                     foreach($copy_files as $file) {
 
+                        Log::LogDebug('VM: Add File "'.$file.'" to Zip!');
+
                         $pi = pathinfo($file);
                         if(!$zip->addFile($file, $pi['basename'])) {
+                            Log::LogError('VM: File "'.$file.'" could not add to Zip!');
 
                             sleep(30);
                             $this->commitSnapshot($snapshot_commit);
@@ -613,10 +678,11 @@ class VM {
                         ];
 
                     }
-
+                    
                     $zip->addFromString('fileinfo.json', json_encode($fileinfos));
 
                     if(!$zip->close()) {
+                        Log::LogError('VM: could not end Zipfile!');
 
                         sleep(30);
                         $this->commitSnapshot($snapshot_commit);
@@ -631,9 +697,9 @@ class VM {
                 // Backup GZ Komprimiert
                 } else if(Config::$COMPRESS_TYPE == 'tar.gz') {
 
-                    file_put_contents(__DIR__ . '/worker.log', date('Y-m-d H:i:s') . ' Start Backup', FILE_APPEND);
-
                     $target_filename = $target_path . date('Y-m-d_H.i') . '.tar.gz';
+                    Log::LogInfo('VM: Compress Backup to gz: ' . $target_filename);
+                    Log::LogWarning('VM: Actualy... for this compression is no restore supported!');
 
                     $cmd = 'tar -czf "' . $target_filename . '" ';
 
@@ -655,29 +721,35 @@ class VM {
 
                     file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
                     $cmd .= '"' . $target_path . 'fileinfo.json" ';
+                    Log::LogInfo('VM: Create Backup gz: ' . $cmd);
                     exec($cmd);
+
+
+                    Log::LogInfo('VM: Delete: ' . $target_path . 'fileinfo.json');
                     unlink($target_path . 'fileinfo.json');
  
                 } else {
-
-                    sleep(30);
-                    $this->commitSnapshot($snapshot_commit);
-                    sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
-                    Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                    return false;
-
+                    Log::LogWarning('VM: Compression "'. Config::$COMPRESS_TYPE .'" is not supported');
                 }
+
+                sleep(30);
+                $this->commitSnapshot($snapshot_commit);
+                sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
+                Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
+                return false;
 
             // Backup ohne Kompression
             } else {
 
                 $target_path = $target_path . date('Y-m-d_H.i') . '/';
+                Log::LogInfo('VM: Backup without Compression to: ' . $target_path);
                 mkdir($target_path, 0777, true);
 
                 $fileinfos = [];
                 foreach($copy_files as $file) {
 
                     $pi = pathinfo($file);
+                    Log::LogDebug('VM: Copy File: ' . $file);
                     copy($file, $target_path . $pi['basename']);
 
                     $fileinfos[] = [
@@ -705,7 +777,148 @@ class VM {
         // Backup erstellen OHNE Snapshot
         } else if($this->state == VMState::STATE_STOPPED) {
 
+            Log::LogDebug('VM: Backup of offline maschine');
 
+            // Nachricht senden
+            sendNotification(sprintf(LANG_NOTIFY_START_BACKUP_VM, $this->name));
+
+            // Job hinzufügen
+            Jobs::add(JobCategory::VM, 'backup', $this->uuid);
+
+            $this->loadUsedDisks();
+
+            // Dateien bestimmen, die kopiert werden müssen.
+            $copy_files = [];
+            foreach($this->disks as $disk) {
+                $copy_files[] = $disk['Source'];
+                $pi = pathinfo($disk['Source']);
+                $copy_files[] = $pi['dirname'] . '/' . $pi['extension'] . '.xml';
+                foreach($disk['PreSource'] as $pre) {
+                    $copy_files[] = $pre;
+                    $pi = pathinfo($pre);
+                    $copy_files[] = $pi['dirname'] . '/' . $pi['extension'] . '.xml';
+                }
+            }
+
+            if(Config::$COMPRESS_BACKUP) {
+                // Backup ZIP Kompression
+                if(Config::$COMPRESS_TYPE == 'zip') {
+                
+                    
+                    $target_filename = $target_path . date('Y-m-d_H.i') . '.zip';
+                    Log::LogInfo('VM: Compress Backup to Zip: ' . $target_filename);
+
+                    $zip = new ZipArchive();
+                    if($zip->open($target_filename, ZipArchive::CREATE) !== true) {
+
+                        sleep(30);
+                        sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
+                        Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
+                        return false;
+
+                    }
+
+                    $fileinfos = [];
+                    foreach($copy_files as $file) {
+
+                        Log::LogDebug('VM: Add File "'.$file.'" to Zip!');
+
+                        $pi = pathinfo($file);
+                        if(!$zip->addFile($file, $pi['basename'])) {
+                            Log::LogError('VM: File "'.$file.'" could not add to Zip!');
+
+                            sleep(30);
+                            sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'file can not compress'), 'warning');
+                            Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
+                            return false;
+
+                        }
+
+                        $fileinfos[] = [
+                            'File' => $file,
+                            'InArchive' => $pi['basename'],
+                            'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
+                            'User' => posix_getpwuid(fileowner($file))['name'],
+                            'Group' => posix_getgrgid(filegroup($file))['name']
+                        ];
+
+                    }
+                    
+                    $zip->addFromString('fileinfo.json', json_encode($fileinfos));
+
+                    if(!$zip->close()) {
+                        Log::LogError('VM: could not end Zipfile!');
+
+                        sleep(30);
+                        sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'can not write ZipFile'), 'warning');
+                        Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
+                        return false;
+
+                    }
+                
+                // Backup GZ Komprimiert
+                } else if(Config::$COMPRESS_TYPE == 'tar.gz') {
+
+                    $target_filename = $target_path . date('Y-m-d_H.i') . '.tar.gz';
+                    Log::LogInfo('VM: Compress Backup to gz: ' . $target_filename);
+                    Log::LogWarning('VM: Actualy... for this compression is no restore supported!');
+
+                    $cmd = 'tar -czf "' . $target_filename . '" ';
+
+                    $fileinfos = [];
+                    foreach($copy_files as $file) {
+
+                        $pi = pathinfo($file);
+                        $cmd .= '"' . $file . '" ';
+
+                        $fileinfos[] = [
+                            'File' => $file,
+                            'InArchive' => $pi['basename'],
+                            'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
+                            'User' => posix_getpwuid(fileowner($file))['name'],
+                            'Group' => posix_getgrgid(filegroup($file))['name']
+                        ];
+
+                    }
+
+                    file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
+                    $cmd .= '"' . $target_path . 'fileinfo.json" ';
+                    Log::LogInfo('VM: Create Backup gz: ' . $cmd);
+                    exec($cmd);
+
+
+                    Log::LogInfo('VM: Delete: ' . $target_path . 'fileinfo.json');
+                    unlink($target_path . 'fileinfo.json');
+                
+                // Backup ohne Kompression
+                } else {
+
+                    $target_path = $target_path . date('Y-m-d_H.i') . '/';
+                    Log::LogInfo('VM: Backup without Compression to: ' . $target_path);
+                    mkdir($target_path, 0777, true);
+    
+                    $fileinfos = [];
+                    foreach($copy_files as $file) {
+    
+                        $pi = pathinfo($file);
+                        Log::LogDebug('VM: Copy File: ' . $file);
+                        copy($file, $target_path . $pi['basename']);
+    
+                        $fileinfos[] = [
+                            'File' => $file,
+                            'InArchive' => $pi['basename'],
+                            'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
+                            'User' => posix_getpwuid(fileowner($file))['name'],
+                            'Group' => posix_getgrgid(filegroup($file))['name']
+                        ];
+    
+                        file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
+    
+                    }
+
+                }
+
+            }
 
         }
 
@@ -725,6 +938,8 @@ class KVM {
      */
     public function getVMs($force_reload = false) {
         
+        Log::LogDebug("KVM: loading VMs");
+
         if($this->vms === null || $force_reload) {
             $this->vms = [];
 
