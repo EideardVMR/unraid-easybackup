@@ -255,6 +255,24 @@ function CopyFile($source, $destination, $progress = true, $delete_source_after_
     return true;
 }
 
+function scandirRecursive($path){
+    if(mb_substr($path, mb_strlen($path) - 1) !== '/') {
+        $path .= '/';
+    }
+    $elements = scandir($path);
+    $files = [];
+    foreach($elements as $e) {
+        if(in_array($e, ['.', '..'])) { continue; }
+        if(is_file($path . $e)) {
+            $files[] = $path . $e;
+        } else if(is_dir($path . $e)){
+            $tmp = scandirRecursive($path . $e . '/');
+            $files = array_merge($files, $tmp);
+        }
+    }
+    return $files;
+}
+
 function DeleteDirectory(){
     /*
     mkdir($dest, 0755);
