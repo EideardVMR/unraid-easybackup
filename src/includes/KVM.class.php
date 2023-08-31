@@ -811,7 +811,6 @@ class VM {
                     $zip = new ZipArchive();
                     if($zip->open($target_filename, ZipArchive::CREATE) !== true) {
 
-                        sleep(30);
                         sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
                         Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
                         return false;
@@ -849,7 +848,6 @@ class VM {
                     if(!$zip->close()) {
                         Log::LogError('VM: could not end Zipfile!');
 
-                        sleep(30);
                         sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'can not write ZipFile'), 'warning');
                         Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
                         return false;
@@ -893,32 +891,39 @@ class VM {
                 // Backup ohne Kompression
                 } else {
 
-                    $target_path = $target_path . date('Y-m-d_H.i') . '/';
-                    Log::LogInfo('VM: Backup without Compression to: ' . $target_path);
-                    mkdir($target_path, 0777, true);
-    
-                    $fileinfos = [];
-                    foreach($copy_files as $file) {
-    
-                        $pi = pathinfo($file);
-                        Log::LogDebug('VM: Copy File: ' . $file);
-                        copy($file, $target_path . $pi['basename']);
-    
-                        $fileinfos[] = [
-                            'File' => $file,
-                            'InArchive' => $pi['basename'],
-                            'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
-                            'User' => posix_getpwuid(fileowner($file))['name'],
-                            'Group' => posix_getgrgid(filegroup($file))['name']
-                        ];
-    
-                        file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
-    
-                    }
+                }
+
+            } else {
+
+                $target_path = $target_path . date('Y-m-d_H.i') . '/';
+                Log::LogInfo('VM: Backup without Compression to: ' . $target_path);
+                mkdir($target_path, 0777, true);
+
+                $fileinfos = [];
+                foreach($copy_files as $file) {
+
+                    $pi = pathinfo($file);
+                    Log::LogDebug('VM: Copy File: ' . $file);
+                    copy($file, $target_path . $pi['basename']);
+
+                    $fileinfos[] = [
+                        'File' => $file,
+                        'InArchive' => $pi['basename'],
+                        'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
+                        'User' => posix_getpwuid(fileowner($file))['name'],
+                        'Group' => posix_getgrgid(filegroup($file))['name']
+                    ];
+
+                    file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
 
                 }
 
             }
+
+            // Benachrichtigung senden
+            sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name));
+            Jobs::remove(JobCategory::VM, 'backup', 'backup_vm_' . $this->uuid);
+            return true;
 
         }
 
