@@ -31,7 +31,7 @@ $container_list = $docker->getContainers();
         <tbody>
             <?php 
                 foreach($container_list as $key => $container): 
-                    $backups = [];#$vm->getStoredBackups();
+                    $backups = $container->getStoredBackups();
                     $backup_size = 0;
                     $last_backup = 'never';
 
@@ -54,9 +54,9 @@ $container_list = $docker->getContainers();
                     <img src="<?=$container->icon?>" style="max-height: 30px" alt="">
                     <?php
                         if(in_array($container->name, Config::$APPDATA_IGNORE_CONTAINER)) {
-                            echo '<a style="text-decoration: line-through" href="#" onclick="toggle_block(\'block1-'.$key.'\');toggle_block(\'block2-'.$key.'\');">'.$container->name.'</a>';
+                            echo '<a style="text-decoration: line-through; cursor: pointer;" href="javascript: void(0);" onclick="toggle_block(\'block1-vm-'.$key.'\');toggle_block(\'block2-vm-'.$key.'\');">'.$container->name.'</a>';
                         } else {
-                            echo '<a href="#" onclick="toggle_block(\'block1-'.$key.'\');toggle_block(\'block2-'.$key.'\');">'.$container->name.'</a>';
+                            echo '<a style="cursor: pointer;" javascript: void(0); onclick="toggle_block(\'block1-vm-'.$key.'\');toggle_block(\'block2-vm-'.$key.'\');">'.$container->name.'</a>';
                         }
                     ?>
                     <span 
@@ -80,7 +80,7 @@ $container_list = $docker->getContainers();
                 foreach($container->mounts as $mount): 
                     if($mount['Type'] != 'bind') { continue; }
             ?>
-            <tr class="wrapper blockX-<?=$key?>">
+            <tr class="wrapper block1-vm-<?=$key?>">
                 <td style="width: 10px; text-align:center;">
                     
                 </td>
@@ -113,7 +113,7 @@ $container_list = $docker->getContainers();
             </tr>
             <?php endforeach; ?>
             <?php foreach($backups as $backup): ?>
-            <tr class="wrapper block2-<?=$key?>" style="display: none;">
+            <tr class="wrapper block2-vm-<?=$key?>" style="display: none;">
                 <td style="width: 10px; text-align:center;"></td>
                 <td colspan="3">
                     <?php
@@ -206,6 +206,17 @@ $container_list = $docker->getContainers();
             loading_view3(false);
         });
     };
+
+    function backupnow_container(container){
+        loading_view2(true);
+        $.post('/plugins/smbackup/actions.php', {action: 'backupnow_container', container: container}, (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view2(false);
+        });
+        
+    }
 
     function loading_view3(type) {
         if(type) {
