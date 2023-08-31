@@ -5,6 +5,14 @@
  * @version 1.0.0
  */
 
+ class LogType {
+
+    const LOG_ERROR = 1;
+    const LOG_WARNING = 2;
+    const LOG_INFO = 4;
+    const LOG_ALL = 7;
+
+}
 
 /******************************************************************** 
  *****************************ERRORHANDLER***************************
