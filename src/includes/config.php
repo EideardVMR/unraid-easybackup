@@ -65,13 +65,6 @@ class Config {
     public static $LOG_WRITE = true;
     public static $LOG_WRITE_PATH = __DIR__ . DIRECTORY_SEPARATOR . 'worker.log';
     public static $LOG_MAX_SIZE = 100 * 1024 * 1024;
-    public static $LOG_PRINT_INFO = true;
-    public static $LOG_PRINT_WARNINGS = true;
-    public static $LOG_PRINT_ERRORS = true;
-    #endregion
-
-    #region Others
-    public static $JOB_CACHE = __DIR__ . DIRECTORY_SEPARATOR . 'jobs.json';
     /**
      * 0 = Debug
      * 1 = Info
@@ -79,6 +72,10 @@ class Config {
      * 3 = Errors
      */
     public static $LOG_LEVEL = 0;
+    #endregion
+
+    #region Others
+    public static $JOB_CACHE = __DIR__ . DIRECTORY_SEPARATOR . 'jobs.json';
     #endregion
 
     public static function saveConfig() {
@@ -109,7 +106,9 @@ class Config {
         $cfg_array = json_decode($cfg_json, true);
 
         foreach($cfg_array as $key => $val) {
-            self::$$key = $val;
+            if(property_exists('Config', $key)) {
+                self::$$key = $val;
+            }
         }
 
     }

@@ -1,34 +1,36 @@
 <?php
-
-class LogType {
-
-    const LOG_ERROR = 1;
-    const LOG_WARNING = 2;
-    const LOG_INFO = 4;
-    const LOG_ALL = 7;
-
-}
-
 class Log {
 
     static function LogError($msg) {
-        $msg = date('Y-m-d H:i:s') . ' ERROR ' . $msg . "\r\n";
-        file_put_contents('/usr/local/emhttp/plugins/smbackup/includes/worker.log', $msg, FILE_APPEND);
+        self::Write(3, $msg);
     }
 
     static function LogInfo($msg) {
-        $msg = date('Y-m-d H:i:s') . ' INFO  ' . $msg . "\r\n";
-        file_put_contents('/usr/local/emhttp/plugins/smbackup/includes/worker.log', $msg, FILE_APPEND);
+        self::Write(2, $msg);
     }
 
     static function LogWarning($msg) {
-        $msg = date('Y-m-d H:i:s') . ' WARN  ' . $msg . "\r\n";
-        file_put_contents('/usr/local/emhttp/plugins/smbackup/includes/worker.log', $msg, FILE_APPEND);
+        self::Write(1, $msg);
     }
 
     static function LogDebug($msg) {
-        $msg = date('Y-m-d H:i:s') . ' DEBUG ' . $msg . "\r\n";
-        file_put_contents('/usr/local/emhttp/plugins/smbackup/includes/worker.log', $msg, FILE_APPEND);
+        self::Write(0, $msg);
+    }
+
+    static function Write($level, $msg){
+        $type = ' UUUUU ';
+
+        if(Config::$LOG_LEVEL > $level) { return; }
+
+        switch($level) {
+            case 0: $type = ' DEBUG '; break;
+            case 1: $type = ' INFO  '; break;
+            case 2: $type = ' WARN  '; break;
+            case 3: $type = ' ERROR '; break;
+        }
+
+        $msg = date('Y-m-d H:i:s') . $type . $msg . "\r\n";
+        file_put_contents(Config::$LOG_WRITE_PATH, $msg, FILE_APPEND);
     }
 
 }
