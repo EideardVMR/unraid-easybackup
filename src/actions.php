@@ -196,18 +196,12 @@ if($_POST['action'] == 'create_snap') {
 } else if($_POST['action'] == 'backupnow_vm'){
     
     exec('php /usr/local/emhttp/plugins/smbackup/job.php backup vm "' . $_POST['vm'] . '" > /dev/null &');
+
+    echo "OK";
+    exit;
+} else if($_POST['action'] == 'backupnow_container'){
     
-    /*
-    $kvm = new KVM();
-    $vms = $kvm->getVMs();
-    foreach($vms as $vm) {
-        if($vm->name == $_POST['vm']) {
-            $vm->createBackup();
-            echo "dsOK";
-            exit;
-        }
-    }
-    */
+    exec('php /usr/local/emhttp/plugins/smbackup/job.php backup container "' . $_POST['container'] . '" > /dev/null &');
 
     echo "OK";
     exit;

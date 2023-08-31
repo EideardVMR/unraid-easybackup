@@ -19,6 +19,22 @@ if(($argv[1] ?? '') == 'backup') {
         }
 
     }
+    
+    if(($argv[2] ?? '') == 'container') {
+        
+        $docker = new Docker();
+        $containers = $docker->getContainers();
+        foreach($containers as $container) {
+
+            if($container->name == ($argv[3] ?? '')) {
+
+                $container->createBackup();
+
+            }
+
+        }
+
+    }
 
 }
 ?>
