@@ -6,14 +6,16 @@ if(($argv[1] ?? '') == 'backup') {
     
     if(($argv[2] ?? '') == 'all') {
 
+        sendNotification(LANG_NOTIFY_FULLBACKUP_START, 'normal');
+
+        $backupstate = true;
+
         $kvm = new KVM();
         $vms = $kvm->getVMs();
         foreach($vms as $vm) {
 
-            if($vm->name == ($argv[3] ?? '')) {
-
-                $vm->createBackup();
-
+            if(!$vm->createBackup()) {
+                $backupstate = false;
             }
 
         }
@@ -21,13 +23,17 @@ if(($argv[1] ?? '') == 'backup') {
         $docker = new Docker();
         $containers = $docker->getContainers();
         foreach($containers as $container) {
-
-            if($container->name == ($argv[3] ?? '')) {
-
-                $container->createBackup();
-
+            
+            if(!$container->createBackup()){
+                $backupstate = false;
             }
 
+        }
+
+        if($backupstate) {
+            sendNotification(LANG_NOTIFY_FULLBACKUP_END, 'normal');
+        } else {
+            sendNotification(LANG_NOTIFY_FULLBACKUP_FAILED, 'alert');
         }
 
     }
