@@ -68,7 +68,7 @@ define('LANG_NOTIFY_FILE_RECYCLE_FAILED','Recycle file failed<br>%s');
 define('LANG_NOTIFY_START_BACKUP_VM','Backup VM %s is started.');
 define('LANG_NOTIFY_END_BACKUP_VM','Backup VM %s is completed.');
 define('LANG_NOTIFY_START_BACKUP_CONTAINER','Backup container %s is started.');
-define('LANG_NOTIFY_END_BACKUP_CONTAINER','Backup container %s is completed.');
+define('LANG_NOTIFY_END_BACKUP_CONTAINER','Backup container %s is completed.<br>%s');
 define('LANG_NOTIFY_FAILED_BACKUP_VM','Backup VM %s was failed<br>%s.');
 define('LANG_NOTIFY_FAILED_BACKUP_CONTAINER','Backup container %s was failed<br>%s.');
 
@@ -90,6 +90,8 @@ define('LANG_GUI_ENABLED', 'Enabled');
 define('LANG_GUI_DISABLED', 'Disabled');
 define('LANG_GUI_SNAPSHOT', 'Snapshot');
 define('LANG_GUI_ORIGINAL', 'Original');
+define('LANG_GUI_FILES', 'Files');
+define('LANG_GUI_IN_TIME', 'in %s');
 define('LANG_GUI_BACKUPTIMES', [
     'day' => 'Daily',
     'week' => 'Weekly',
