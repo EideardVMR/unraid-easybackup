@@ -204,7 +204,8 @@ class Container {
 
                 $copy_files[] = [
                     'full_path' => $full_path,
-                    'r_path' => $r_path
+                    'r_path' => $r_path,
+                    'source' => join('/',$ex) . '/'
                 ];
             }
 
@@ -267,7 +268,7 @@ class Container {
                 sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_CONTAINER, $this->name, $compressinfo), 'normal');
             } else {
                 Log::LogError('Container: Backup ' . $this->name .' failed');
-                sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_CONTAINER, $this->name), 'warning');
+                sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_CONTAINER, $this->name, ''), 'warning');
             }
         }
 
@@ -380,8 +381,60 @@ class Container {
     }
 
     private function BackupCompressGz($target_files, $target_path){
+
+        $this->backup_compressioninfo = [
+            'Files' => 0,
+            'OriginalSize' => 0,
+            'CompressedSize' => 0,
+            'Time' => 0
+        ];
+
         $target_path .= '.tar.gz';
+        $pi = pathinfo($target_path);
+        if(!CheckFilesExists($pi['dirname'] . '/')) {
+            mkdir($pi['dirname'] . '/', 0777, true);
+        }
+
         Log::LogInfo('Container: Backup with GZ Compression to: ' . $target_path);
+
+        $command = 'tar -czf ' . $target_path;       
+        foreach($target_files as $tf) {
+            
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += filesize($tf['full_path']);
+
+            $command .= ' -C "' . $tf['source'] . '" "' . $tf['r_path'] . '"';
+
+        }
+
+        if(file_put_contents($pi['dirname'] . '/mounts.json', json_encode($this->mounts)) === false){
+            Log::LogError('Container: Could not create mounts.json');
+            return false;
+        }
+        $command .= ' -C "' . $pi['dirname'] . '/" "mounts.json"';
+
+        if(file_put_contents($pi['dirname'] . '/fileinfo.json', json_encode($this->getFileInfos($target_files))) === false){
+            Log::LogError('Container: Could not create fileinfo.json');
+            return false;
+        }
+        $command .= ' -C "' . $pi['dirname'] . '/" "fileinfo.json"';
+
+        Log::LogDebug('Start Backup: ' . $command);
+
+        $starttime = time();
+        exec($command, $exec_output);
+
+        unlink($pi['dirname'] . '/mounts.json');
+        unlink($pi['dirname'] . '/fileinfo.json');
+
+        if(count($exec_output)>0) {
+            return false;
+        }
+
+        $this->backup_compressioninfo['CompressedSize'] += filesize($target_path);
+        $this->backup_compressioninfo['Time'] = time() - $starttime;
+
+        return true;
 
     }
 
