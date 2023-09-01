@@ -4,6 +4,34 @@ require_once '/usr/local/emhttp/plugins/smbackup/includes/loader.php';
 
 if(($argv[1] ?? '') == 'backup') {
     
+    if(($argv[2] ?? '') == 'all') {
+
+        $kvm = new KVM();
+        $vms = $kvm->getVMs();
+        foreach($vms as $vm) {
+
+            if($vm->name == ($argv[3] ?? '')) {
+
+                $vm->createBackup();
+
+            }
+
+        }
+        
+        $docker = new Docker();
+        $containers = $docker->getContainers();
+        foreach($containers as $container) {
+
+            if($container->name == ($argv[3] ?? '')) {
+
+                $container->createBackup();
+
+            }
+
+        }
+
+    }
+
     if(($argv[2] ?? '') == 'vm') {
         
         $kvm = new KVM();
