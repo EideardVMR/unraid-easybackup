@@ -18,7 +18,9 @@ function print_debug($debug){
 
 function sendNotification($message, $type = 'normal'){
     if($type != 'normal' && $type != 'alert' && $type != 'warning') { $type = 'warning'; }
-    exec('/usr/local/emhttp/webGui/scripts/notify -i ' . $type . ' -d "' . $message . '" -s "' . NAME . '"');
+    exec('/usr/local/emhttp/webGui/scripts/notify -i ' . $type . ' -d "' . $message . '" -s "' . NAME . '"', $exec_out);
+    Log::LogInfo('Create Message: ' . $message);
+    Log::LogInfo(print_r($exec_out, true));
 }
 
 function padit($c = 1){
