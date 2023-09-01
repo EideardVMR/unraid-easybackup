@@ -9,6 +9,8 @@ class Container {
     public $icon = '';
     public $state = '';
 
+    public $backup_compressioninfo = [];
+
     function __construct()
     {
 
@@ -140,20 +142,20 @@ class Container {
 
         Log::LogDebug('Container: Start Backup "' . $this->name . '"');
 
+        // Benachrichtigung senden wenn gewünscht
         if($notify) {
             sendNotification(sprintf(LANG_NOTIFY_START_BACKUP_CONTAINER, $this->name), 'normal');
         }
 
-        $was_running = false;
-
+        // Job prüfen und erstellen
         if(Jobs::check(JobCategory::CONTAINER, 'backup', $this->id)) {
             Log::LogWarning('Container: Aborted Backup of "' . $this->name . '" is running.');
             return false;
         }
-
         Jobs::add(JobCategory::CONTAINER, 'backup', $this->id);
 
-        // Backup angehaltenen Docker
+        // Docker anhalten wenn dieser läuft.
+        $was_running = false;
         if($this->state == 'running') {
 
             $was_running = true;
@@ -175,6 +177,7 @@ class Container {
 
         }
 
+        // Dateien für das Backup ermitteln
         $copy_files = [];
         foreach($this->mounts as $mount) {
 
@@ -184,11 +187,13 @@ class Container {
                 continue; 
             }
 
+            // Ignoriere Mounts seitens der User
             if(in_array($mount['Source'], Config::$APPDATA_IGNORE_BINDES)) {
                 Log::LogInfo('Container: Mount "' . $mount['Source'] . '" is disabled by user. Mount ignored');
                 continue;
             }
 
+            // Dateien zusammensuchen
             $mountfiles = scandirRecursive($mount['Source']);
             foreach($mountfiles as $mf) {
                 $full_path = $mf;
@@ -207,22 +212,27 @@ class Container {
 
         }
 
+        // Zielpfad bestimmen 
+        // Dateiendung und tieferliegende Verzeichnisse werden in der Kompressionmethode angehangen!
+        // Daher kein / am ende des Pfades.
         $target_path = Config::$APPDATA_BACKUP_PATH . $this->name . '/' . date('Y-m-d_H.i');
 
+        $backupstate = false;
         if(Config::$COMPRESS_BACKUP) {
             if(Config::$COMPRESS_TYPE == 'zip') {
-                $this->BackupCompressZip($copy_files, $target_path);
+                $backupstate = $this->BackupCompressZip($copy_files, $target_path);
             } else if(Config::$COMPRESS_TYPE == 'tar.gz') {
-                $this->BackupCompressGz($copy_files, $target_path);
+                $backupstate = $this->BackupCompressGz($copy_files, $target_path);
             } else {
                 Log::LogWarning('Container: Compression "'. Config::$COMPRESS_TYPE .'" is not supported');
             }
         } else {
-            $this->BackupUnCompressed($copy_files, $target_path);
+            $backupstate = $this->BackupUnCompressed($copy_files, $target_path);
         }
 
         Jobs::remove(JobCategory::CONTAINER, 'backup', $this->id);
 
+        // Docker starten wenn dieser zuvor online war
         if($was_running) {
 
             $this->startContainer();
@@ -243,21 +253,85 @@ class Container {
 
         }
 
+        // Benachrichtigung senden wenn gewünscht
         if($notify) {
-            sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_CONTAINER, $this->name), 'normal');
+
+            if($backupstate) {
+                Log::LogInfo('Container: Backup ' . $this->name .' completed');
+                $compressinfo  = '' . $this->backup_compressioninfo['Files'] . ' ' . LANG_GUI_FILES . ' ';    
+                $tz = date_default_timezone_get();
+                date_default_timezone_set('UTC');
+                $compressinfo .= sprintf(LANG_GUI_IN_TIME, date('H:i:s', $this->backup_compressioninfo['Time'])) . '<br>';
+                date_default_timezone_set($tz);
+                Log::LogDebug(print_r($this->backup_compressioninfo, true));
+                sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_CONTAINER, $this->name, $compressinfo), 'normal');
+            } else {
+                Log::LogError('Container: Backup ' . $this->name .' failed');
+                sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_CONTAINER, $this->name), 'warning');
+            }
         }
+
+        return $backupstate;
+
+    }
+
+    private function BackupUnCompressed($target_files, $target_path){
+        
+        $this->backup_compressioninfo = [
+            'Files' => 0,
+            'OriginalSize' => 0,
+            'CompressedSize' => 0,
+            'Time' => 0
+        ];
+
+        $target_path .= '/';
+        Log::LogInfo('Container: Backup without Compression to: ' . $target_path);
+
+        if(!CheckFilesExists($target_path)) {
+            mkdir($target_path, 0777, true);
+        }
+
+        $starttime = time();
+        foreach($target_files as $tf) {
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += filesize($tf['full_path']);
+            $this->backup_compressioninfo['CompressedSize'] += filesize($tf['full_path']);
+
+            $pi = pathinfo($target_path . $tf['r_path']);
+            if(!CheckFilesExists($pi['dirname'] . '/')) {
+                mkdir($pi['dirname'] . '/', 0777, true);
+            }
+
+            if(!copy($tf['full_path'], $target_path . $tf['r_path'])) {
+                Log::LogError('Container: Could not create "' . $tf['full_path'] . '"');
+                return false;
+            }
+        }
+
+        if(file_put_contents($target_path . 'mounts.json', json_encode($this->mounts)) === false){
+            Log::LogError('Container: Could not create mounts.json');
+            return false;
+        }
+
+        if(file_put_contents($target_path . 'fileinfo.json', json_encode($this->getFileInfos($target_files))) === false){
+            Log::LogError('Container: Could not create fileinfo.json');
+            return false;
+        }
+        $this->backup_compressioninfo['Time'] = time() - $starttime;
 
         return true;
 
     }
 
-    private function BackupUnCompressed($target_files, $target_path){
-        $target_path .= '/';
-        Log::LogInfo('Container: Backup without Compression to: ' . $target_path);
-
-    }
-
     private function BackupCompressZip($target_files, $target_path){
+        
+        $this->backup_compressioninfo = [
+            'Files' => 0,
+            'OriginalSize' => 0,
+            'CompressedSize' => 0,
+            'Time' => 0
+        ];
+
         $target_path .= '.zip';
         $pi = pathinfo($target_path);
         if(!CheckFilesExists($pi['dirname'] . '/')) {
@@ -271,7 +345,12 @@ class Container {
             return false;
         }
 
+        $starttime = time();
         foreach($target_files as $tf) {
+            
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += filesize($tf['full_path']);
+            
             if(!$zip->addFile($tf['full_path'], $tf['r_path'])){
                 Log::LogError('Container: Could not create "' . $tf['full_path'] . '"');
                 return false;
@@ -283,10 +362,18 @@ class Container {
             return false;
         }
 
+        if(!$zip->addFromString('fileinfo.json', json_encode($this->getFileInfos($target_files)))) {
+            Log::LogError('Container: Could not create fileinfo.json');
+            return false;
+        }
+
         if(!$zip->close()) {
             Log::LogError('Container: Could not close archive: ' . $target_path);
             return false;
         }
+
+        $this->backup_compressioninfo['CompressedSize'] += filesize($target_path);
+        $this->backup_compressioninfo['Time'] = time() - $starttime;
 
         return true;
 
@@ -296,6 +383,25 @@ class Container {
         $target_path .= '.tar.gz';
         Log::LogInfo('Container: Backup with GZ Compression to: ' . $target_path);
 
+    }
+
+    function getFileInfos($target_files){
+        $fileinfos = [];
+        foreach($target_files as $file) {
+    
+            $pi = pathinfo($file['full_path']);
+    
+            $fileinfos[] = [
+                'File' => $file['full_path'],
+                'InArchive' => $file['r_path'],
+                'Permissions' => substr(sprintf('%o', fileperms($file['full_path'])), -4),
+                'User' => posix_getpwuid(fileowner($file['full_path']))['name'],
+                'Group' => posix_getgrgid(filegroup($file['full_path']))['name']
+            ];
+    
+        }
+    
+        return $fileinfos;
     }
 
 }
