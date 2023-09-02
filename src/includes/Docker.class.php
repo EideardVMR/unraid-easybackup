@@ -83,6 +83,7 @@ class Container {
         Log::LogDebug('Container: Informations of "' . $this->name . '" found');
         return true;
         */
+
     }
 
     /**
@@ -138,7 +139,7 @@ class Container {
         return $output;
     }
 
-    public function createBackup($notify = false) {
+    public function createBackup($notify = false) : bool {
 
         Log::LogDebug('Container: Start Backup "' . $this->name . '"');
 
@@ -276,7 +277,7 @@ class Container {
 
     }
 
-    private function BackupUnCompressed($target_files, $target_path){
+    private function BackupUnCompressed($target_files, $target_path) : bool {
         
         $this->backup_compressioninfo = [
             'Files' => 0,
@@ -322,9 +323,9 @@ class Container {
 
         return true;
 
-    }
+    } 
 
-    private function BackupCompressZip($target_files, $target_path){
+    private function BackupCompressZip($target_files, $target_path) : bool {
         
         $this->backup_compressioninfo = [
             'Files' => 0,
@@ -380,7 +381,7 @@ class Container {
 
     }
 
-    private function BackupCompressGz($target_files, $target_path){
+    private function BackupCompressGz($target_files, $target_path) : bool {
 
         $this->backup_compressioninfo = [
             'Files' => 0,
@@ -438,7 +439,7 @@ class Container {
 
     }
 
-    function getFileInfos($target_files){
+    function getFileInfos($target_files) : array {
         $fileinfos = [];
         foreach($target_files as $file) {
     

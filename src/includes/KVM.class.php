@@ -573,7 +573,7 @@ class VM {
         return $output;
     }
 
-    public function createBackup($notify = false){
+    public function createBackup($notify = false) : bool {
 
         $snapshot_commit = 'original';
 
@@ -739,7 +739,7 @@ class VM {
 
     }
     
-    private function BackupUnCompressed($target_files, $target_path){
+    private function BackupUnCompressed($target_files, $target_path) : bool {
         
         $this->backup_compressioninfo = [
             'Files' => 0,
@@ -784,7 +784,7 @@ class VM {
 
     }
 
-    private function BackupCompressZip($target_files, $target_path){
+    private function BackupCompressZip($target_files, $target_path) : bool {
         
         $this->backup_compressioninfo = [
             'Files' => 0,
@@ -837,7 +837,7 @@ class VM {
 
     }
 
-    private function BackupCompressGz($target_files, $target_path){
+    private function BackupCompressGz($target_files, $target_path) : bool{
 
         $this->backup_compressioninfo = [
             'Files' => 0,
@@ -891,7 +891,7 @@ class VM {
 
     }
 
-    function getFileInfos($target_files){
+    function getFileInfos($target_files) : array {
         $fileinfos = [];
         foreach($target_files as $file) {
     
