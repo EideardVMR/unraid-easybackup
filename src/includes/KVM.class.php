@@ -598,6 +598,7 @@ class VM {
             $this->error = 'Job is running';
             return true;
         }
+        Jobs::add(JobCategory::VM, 'backup', $this->uuid);
 
         // Backuppfad bestimmen
         $target_path = Config::$VM_BACKUP_PATH . $this->name . '/' . date('Y-m-d_H.i');
@@ -726,6 +727,8 @@ class VM {
                 if($notify) {
                     sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, LANG_NOTIFY_SNAPSHOT_COMMIT_FAILED));
                 }
+                
+                Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
                 return false;
             }
         }
@@ -735,6 +738,7 @@ class VM {
             sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name));
         }
 
+        Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
         return $backupstate;
 
     }
