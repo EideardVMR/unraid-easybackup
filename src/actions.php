@@ -134,11 +134,33 @@ if($_POST['action'] == 'create_snap') {
         echo "Failed";
         exit;
     }
-} else if($_POST['action'] == 'vm_settings'){
+} else if($_POST['action'] == 'settings'){
 
-    Config::$ENABLE_VM_BACKUP = $_POST['vm_enable'] == 'true';
-    Config::$VM_BACKUP_PATH = $_POST['backup_location'];
+    Config::$ENABLE_VM_BACKUP = $_POST['ENABLE_VM_BACKUP'] == 'true';
+    Config::$VM_BACKUP_PATH = $_POST['VM_BACKUP_PATH'];
+    Config::$SNAPSHOT_EXTENSION = $_POST['SNAPSHOT_EXTENSION'];
 
+    Config::$ENABLE_APPDATA_BACKUP = $_POST['ENABLE_APPDATA_BACKUP'] == 'true';
+    Config::$APPDATA_BACKUP_PATH = $_POST['APPDATA_BACKUP_PATH'];
+
+    Config::$COMPRESS_BACKUP = $_POST['COMPRESS_BACKUP'] == 'true';
+    Config::$COMPRESS_TYPE = $_POST['COMPRESS_TYPE'];
+
+    Config::$ENABLE_RECYCLE_BIN = $_POST['ENABLE_RECYCLE_BIN'] == 'true';
+    Config::$RECYCLE_BIN_PATH = $_POST['RECYCLE_BIN_PATH'];
+
+    Config::$MAX_CONSECUTIVE_BACKUPS = $_POST['MAX_CONSECUTIVE_BACKUPS'];
+    Config::$MAX_WEEK_BACKUPS = $_POST['MAX_WEEK_BACKUPS'];
+    Config::$MAX_MONTH_BACKUPS = $_POST['MAX_MONTH_BACKUPS'];
+    Config::$MAX_YEAR_BACKUPS = $_POST['MAX_YEAR_BACKUPS'];
+
+    Config::$GOTIFY_ENABLED = $_POST['GOTIFY_ENABLED'] == 'true';
+    Config::$GOTIFY_SERVER = $_POST['GOTIFY_SERVER'];
+    Config::$GOTIFY_TOKEN = $_POST['GOTIFY_TOKEN'];
+    Config::$GOTIFY_PUSH_ON_COMPLETE = $_POST['GOTIFY_PUSH_ON_COMPLETE'] == 'true';
+    Config::$GOTIFY_PUSH_ON_ERROR = $_POST['GOTIFY_PUSH_ON_ERROR'] == 'true';
+
+    Config::$LOG_LEVEL = $_POST['LOG_LEVEL'];
     
     if(Config::saveConfig() === true) {
         echo "OK";

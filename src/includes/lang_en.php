@@ -29,6 +29,8 @@ define('LANG_GUI_HEADER_VMS', 'VMs');
 define('LANG_GUI_HEADER_CONTAINER', 'Container');
 define('LANG_GUI_HEADER_COMPRESSOION', 'Compression');
 define('LANG_GUI_HEADER_GOTIFY', 'Gotify');
+define('LANG_GUI_HEADER_RECYCLE', 'Recycle Bin');
+define('LANG_GUI_HEADER_LOGS', 'Logs');
 
 // Tabellen Spaltennamen
 define('LANG_GUI_TABLE_COL_NAME', 'Name');
@@ -103,6 +105,12 @@ define('LANG_GUI_COMPRESSED_SIZE', 'Compressed Size');
 define('LANG_GUI_FILES', 'Files');
 define('LANG_GUI_IN_TIME', 'in %s');
 define('LANG_GUI_TIME', 'Time');
+
+define('LANG_GUI_LOG_LEVEL0', '0 - Debug');
+define('LANG_GUI_LOG_LEVEL1', '1 - Info');
+define('LANG_GUI_LOG_LEVEL2', '2 - Warnings (recommended)');
+define('LANG_GUI_LOG_LEVEL3', '3 - Errors');
+
 define('LANG_GUI_BACKUPTIMES', [
     'day' => 'Daily',
     'week' => 'Weekly',

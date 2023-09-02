@@ -8,7 +8,7 @@ class Config {
     /** Dateiendung für einen Snapshot */
     public static $SNAPSHOT_EXTENSION = 'snap';
     /** Pfad zum Backup Ordner für VMs */
-    public static $VM_BACKUP_PATH = '/mnt/user/backup_internal/vms/';
+    public static $VM_BACKUP_PATH = '/mnt/user/backup_internal/domains/';
     /** Namen der zu Ignorierenden VMs*/
     public static $VM_IGNORE_VMS = [];
     /** Pfade zu den zu ignorierenden VM Disks */

@@ -198,10 +198,55 @@ Icon="clone"
     </blockquote>
 
     <div class="title">
+        <span class="left"><?=LANG_GUI_HEADER_RECYCLE?></span>
+    </div>
+    <dl>
+        <dt style="cursor: help" onclick="help('help12')">Enable Recycle Bin:</dt>
+        <dd>
+            <select name="ENABLE_RECYCLE_BIN" id="ENABLE_RECYCLE_BIN">
+                <option value="true" <?= (Config::$ENABLE_RECYCLE_BIN ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                <option value="false" <?= (!Config::$ENABLE_RECYCLE_BIN ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+            </select>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help12">
+        <p>Use the trash can to store deleted backups. 
+            This feature is based on the assumption that all backups are stored in the same share 
+            and you have installed the Recycle Bin plugin 
+            (<a href="https://github.com/dlandon/recycle.bin/">https://github.com/dlandon/recycle.bin/</a>). 
+            The plugin is not required, but it will help you. </p>
+    </blockquote>
+    <dl>
+        <dt style="cursor: help" onclick="help('help13')">Recycle location:</dt>
+        <dd>
+            <input 
+                type="text" 
+                id="RECYCLE_BIN_PATH" 
+                name="RECYCLE_BIN_PATH" 
+                autocomplete="off" 
+                spellcheck="false" 
+                data-pickroot="/mnt/" 
+                data-pickfolders="true"
+                data-pickfilter="NO_FILES_FILTER"
+                pattern="^\/mnt\/(([\w.-]+)( [\w.-]+)*)*(\/(([\w.-]+)( [\w.-]+)*)*)*$"
+                value="<?=Config::$APPDATA_BACKUP_PATH?>" 
+                placeholder="Select a backup location" 
+                style="display: inline-block;">
+            <div class="textarea fileTree"></div>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help13">
+        <p>Set a path which you want to use as a trash can. 
+            It is advisable that the path is a share and the folder is called ".Recycle.Bin". 
+            The share should also contain the backups of the virtual machines and the containers.
+        </p>
+    </blockquote>
+
+    <div class="title">
         <span class="left"><?=LANG_GUI_HEADER_GOTIFY?></span>
     </div>
     <dl>
-        <dt style="cursor: help" onclick="help('help12')">Enable Gotify Push Notification:</dt>
+        <dt style="cursor: help" onclick="help('help14')">Enable Gotify Push Notification:</dt>
         <dd>
             <select name="GOTIFY_ENABLED" id="GOTIFY_ENABLED">
                 <option value="true" <?= (Config::$GOTIFY_ENABLED ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
@@ -209,35 +254,35 @@ Icon="clone"
             </select>
         </dd>
     </dl>
-    <blockquote style="display: none;" id="help12">
+    <blockquote style="display: none;" id="help14">
         <p>Gotify is a notification tool. You can install it as an app in your Unraid. With a public address and the app on your phone, you can receive the messages.</p>
     </blockquote>
 
     <div id="block_gotify">
         <dl>
-            <dt style="cursor: help" onclick="help('help13')">Server Address:</dt>
+            <dt style="cursor: help" onclick="help('help15')">Server Address:</dt>
             <dd>
-                <input type="number" name="GOTIFY_SERVER" value="<?=Config::$GOTIFY_SERVER?>" placeholder="http://example.com/">
+                <input type="text" name="GOTIFY_SERVER" value="<?=Config::$GOTIFY_SERVER?>" placeholder="http://example.com/">
             </dd>
         </dl>
-        <blockquote style="display: none;" id="help13">
+        <blockquote style="display: none;" id="help15">
             <p>Specify the server address to which the message should be sent.</p>
         </blockquote>
 
         <dl>
-            <dt style="cursor: help" onclick="help('help14')">Token:</dt>
+            <dt style="cursor: help" onclick="help('help16')">Token:</dt>
             <dd>
-                <input type="number" name="GOTIFY_TOKEN" value="<?=Config::$GOTIFY_TOKEN?>" placeholder="xrx4xJTA69dz8Zy <-- example!!!">
+                <input type="text" name="GOTIFY_TOKEN" value="<?=Config::$GOTIFY_TOKEN?>" placeholder="xrx4xJTA69dz8Zy <-- example!!!">
             </dd>
         </dl>
-        <blockquote style="display: none;" id="help14">
+        <blockquote style="display: none;" id="help16">
             <p>The token you created to get access to the application. 
                 You can find instructions on how to create a token here:
             </p>
             <p><a href="https://gist.github.com/mcnaveen/2788985648490e7b3af24647247ed4e7">https://gist.github.com/mcnaveen/2788985648490e7b3af24647247ed4e7</a></p>
         </blockquote>
         <dl>
-            <dt style="cursor: help" onclick="help('help15')">Notification on completed backup:</dt>
+            <dt style="cursor: help" onclick="help('help17')">Notification on completed backup:</dt>
             <dd>
                 <select name="GOTIFY_PUSH_ON_COMPLETE" id="">
                     <option value="true" <?= (Config::$GOTIFY_PUSH_ON_COMPLETE ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
@@ -245,11 +290,11 @@ Icon="clone"
                 </select>
             </dd>
         </dl>
-        <blockquote style="display: none;" id="help15">
+        <blockquote style="display: none;" id="help17">
             <p>Sends a message when the backup is successfully created</p>
         </blockquote>
         <dl>
-            <dt style="cursor: help" onclick="help('help16')">Notification on error:</dt>
+            <dt style="cursor: help" onclick="help('help18')">Notification on error:</dt>
             <dd>
                 <select name="GOTIFY_PUSH_ON_ERROR" id="">
                     <option value="true" <?= (Config::$GOTIFY_PUSH_ON_ERROR ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
@@ -257,10 +302,55 @@ Icon="clone"
                 </select>
             </dd>
         </dl>
-        <blockquote style="display: none;" id="help16">
+        <blockquote style="display: none;" id="help18">
             <p>Sends a message that an error has occurred during backup</p>
         </blockquote>
     </div>
+
+    <div class="title">
+        <span class="left"><?=LANG_GUI_HEADER_LOGS?></span>
+    </div>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help19')">Loglevel:</dt>
+        <dd>
+            <select name="LOG_LEVEL" id="">
+                <option value="0" <?= (Config::$LOG_LEVEL == 0 ? 'selected' : '' ) ?>><?=_(LANG_GUI_LOG_LEVEL0)?></option>
+                <option value="1" <?= (Config::$LOG_LEVEL == 1 ? 'selected' : '' ) ?>><?=_(LANG_GUI_LOG_LEVEL1)?></option>
+                <option value="2" <?= (Config::$LOG_LEVEL == 2 ? 'selected' : '' ) ?>><?=_(LANG_GUI_LOG_LEVEL2)?></option>
+                <option value="3" <?= (Config::$LOG_LEVEL == 3 ? 'selected' : '' ) ?>><?=_(LANG_GUI_LOG_LEVEL3)?></option>
+            </select>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help19">
+        <p>
+        The log level determines which events appear in the log file 
+        (/boot/config/plugins/easybackup/worker.log). I explain the 
+        level with an example when creating a backup.
+        </p>
+        <p style="font-weight: bold;">Level 0 = Debug</p>
+        <p>All events are written. This is the most detailed mode but it also uses a lot of memory! 
+            For example, it is written that a backup was started, to which snapshot to return, that 
+            a container is stopped or started, and so on.
+        </p>
+        <p style="font-weight: bold;">Level 1 = Info</p>
+        <p>Only interesting information is written, which can help to understand why e.g. a backup 
+            does not start. For example, a machine is in the Pause stage. Easy Backup cannot take 
+            this status into account, so the backup is aborted and acknowledged as "not done". 
+            In the log you will find the information why the backup was aborted. 
+        </p>
+        <p style="font-weight: bold;">Level 2 = Warnings (recommended)</p>
+        <p>Only events that are errors or warnings are written here. For example, if an attempt 
+            is made to create a file that already exists. 
+        </p>
+        <p style="font-weight: bold;">Level 3 = Errors</p>
+        <p>Only errors are written. For example, if the command to create a snapshot was sent, 
+            but Unraid acknowledges this with an error. Errors are ALWAYS serious and should be 
+            investigated. It may happen that after creating the snapshot and saving the files, 
+            the commit did not work. This would lead to the fact that more and more snapshots are 
+            created which can strongly affect the performance!
+        </p>
+    </blockquote>
 </form>
 
 <button onClick="save_settings()"><?=_(LANG_GUI_BTN_SAVE)?></button>
