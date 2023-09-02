@@ -94,8 +94,11 @@ define('LANG_GUI_ENABLED', 'Enabled');
 define('LANG_GUI_DISABLED', 'Disabled');
 define('LANG_GUI_SNAPSHOT', 'Snapshot');
 define('LANG_GUI_ORIGINAL', 'Original');
+define('LANG_GUI_ORIGINAL_SIZE', 'Original Size');
+define('LANG_GUI_COMPRESSED_SIZE', 'Compressed Size');
 define('LANG_GUI_FILES', 'Files');
 define('LANG_GUI_IN_TIME', 'in %s');
+define('LANG_GUI_TIME', 'Time');
 define('LANG_GUI_BACKUPTIMES', [
     'day' => 'Daily',
     'week' => 'Weekly',
