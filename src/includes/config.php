@@ -28,9 +28,9 @@ class Config {
 
     #region Komprimierung
     /** Komprimierung einschalten */
-    public static $COMPRESS_BACKUP = false;
+    public static $COMPRESS_BACKUP = true;
     /** Art der Komprimierung (Möglich: "zip", "tar.gz") */
-    public static $COMPRESS_TYPE = 'tar.gz';
+    public static $COMPRESS_TYPE = 'zip';
     #endregion
 
     #region Papierkorb
@@ -75,7 +75,7 @@ class Config {
     #endregion
 
     #region Others
-    public static $JOB_CACHE = __DIR__ . DIRECTORY_SEPARATOR . 'jobs.json';
+    public static $JOB_CACHE = '/boot/config/plugins/easybackup/jobs.json';
     #endregion
 
     public static function saveConfig() {
@@ -92,7 +92,7 @@ class Config {
         }
         $config_json = json_encode($jsonArray);
 
-        if(file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'config.json', $config_json)) {
+        if(file_put_contents('/boot/config/plugins/easybackup/config.json', $config_json)) {
             return true;
         }
 
@@ -102,7 +102,12 @@ class Config {
 
     public static function Load() {
 
-        $cfg_json = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'config.json');
+        if(!CheckFilesExists('/boot/config/plugins/easybackup/config.json')) {
+            self::saveConfig();
+            return;
+        }
+
+        $cfg_json = file_get_contents('/boot/config/plugins/easybackup/config.json');
         $cfg_array = json_decode($cfg_json, true);
 
         foreach($cfg_array as $key => $val) {
