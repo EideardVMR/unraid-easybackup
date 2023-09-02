@@ -169,30 +169,6 @@ if($_POST['action'] == 'create_snap') {
         echo "Failed";
         exit;
     }
-} else if($_POST['action'] == 'vm_settings'){
-
-    Config::$ENABLE_VM_BACKUP = $_POST['vm_enable'] == 'true';
-    Config::$VM_BACKUP_PATH = $_POST['backup_location'];
-    
-    if(Config::saveConfig() === true) {
-        echo "OK";
-        exit;
-    } else {
-        echo "Failed";
-        exit;
-    }
-} else if($_POST['action'] == 'container_settings'){
-
-    Config::$ENABLE_APPDATA_BACKUP = $_POST['container_enable'] == 'true';
-    Config::$APPDATA_BACKUP_PATH = $_POST['backup_location'];
-    
-    if(Config::saveConfig() === true) {
-        echo "OK";
-        exit;
-    } else {
-        echo "Failed";
-        exit;
-    }
 } else if($_POST['action'] == 'delete'){
     
     if(is_dir($_POST['file'])) {
