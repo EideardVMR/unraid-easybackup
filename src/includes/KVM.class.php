@@ -586,7 +586,7 @@ class VM {
         Log::LogDebug('VM: Start Backup "' . $this->name . '"');
         // Ablehnen wenn VM nicht im definierten Status ist. 
         if($this->state != VMState::STATE_RUNNING && $this->state != VMState::STATE_STOPPED) {
-            Log::LogInfo('VM: Backup can not start in unsupported state. Backup aborted');
+            Log::LogInfo('VM: Backup of "' . $this->name . '" can not start in unsupported state. Backup aborted');
             $this->error = "VM must be started or stopped to backup it.";
             // Nachricht senden
             if($notify) {
@@ -600,7 +600,7 @@ class VM {
 
         // Prüfen ob der Job bereits läuft.
         if(Jobs::check(JobCategory::VM, 'backup', $this->uuid)) {
-            Log::LogInfo('VM: Backup is running. Backup aborted.');
+            Log::LogInfo('VM: Backup of "' . $this->name . '" is running. Backup aborted.');
             $this->error = 'Job is running';
             return true;
         }
