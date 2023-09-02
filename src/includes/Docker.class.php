@@ -11,11 +11,6 @@ class Container {
 
     public $backup_compressioninfo = [];
 
-    function __construct()
-    {
-
-    }
-
     function getClient() {
         if($this->client === null) {
             $this->client = new DockerClient('/var/run/docker.sock');
@@ -23,7 +18,12 @@ class Container {
 
         return $this->client;
     }
-
+    
+    /**
+     * startContainer
+     * Startet den Container
+     * @return void
+     */
     public function startContainer(){
 
         Log::LogDebug('Container: Start Container "' . $this->name . '"');
@@ -32,7 +32,12 @@ class Container {
         Log::LogInfo(print_r($response, true));
 
     }
-
+    
+    /**
+     * stopContainer
+     * Fährt den Container runter
+     * @return void
+     */
     public function stopContainer(){
         
         Log::LogDebug('Container: Stop Container "' . $this->name . '"');
@@ -40,7 +45,12 @@ class Container {
         $response  = $this->client->dispatchCommand('/containers/' . $this->id . '/stop', []);
         Log::LogInfo(print_r($response, true));
     }    
-
+    
+    /**
+     * loadInformations
+     * Lädt Informationen (Mounts, Icon, State) neu
+     * @return void
+     */
     public function loadInformations(){
 
         Log::LogDebug('Container: Load informations of "' . $this->name . '"');
@@ -138,7 +148,13 @@ class Container {
 
         return $output;
     }
-
+    
+    /**
+     * createBackup
+     * Erzeugt ein Backup
+     * @param  mixed $notify sendet eine Nachricht an Unraid
+     * @return bool
+     */
     public function createBackup($notify = false) : bool {
 
         Log::LogDebug('Container: Start Backup "' . $this->name . '"');
@@ -276,7 +292,15 @@ class Container {
         return $backupstate;
 
     }
-
+        
+    /**
+     * BackupUnCompressed
+     * Kopiert alle Dateien ohne Komprimierung
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup]
+     * @param  mixed $target_path Pfad zum Ziel
+     * @return bool true wenn es geklappt hat, sonst false
+     */
     private function BackupUnCompressed($target_files, $target_path) : bool {
         
         $this->backup_compressioninfo = [
@@ -325,6 +349,14 @@ class Container {
 
     } 
 
+    /**
+     * BackupCompressZip
+     * Kopiert alle Dateien in eine ZipDatei
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup]
+     * @param  mixed $target_path Pfad zum Ziel
+     * @return bool true wenn es geklappt hat, sonst false
+     */
     private function BackupCompressZip($target_files, $target_path) : bool {
         
         $this->backup_compressioninfo = [
@@ -380,7 +412,15 @@ class Container {
         return true;
 
     }
-
+    
+    /**
+     * BackupCompressGz
+     * Kopiert alle Dateien ohne Komprimierung
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup, 'source' => Pfad innerhaln des Backups ohne Datei ]
+     * @param  mixed $target_path Pfad zum Ziel
+     * @return bool true wenn es geklappt hat, sonst false
+     */
     private function BackupCompressGz($target_files, $target_path) : bool {
 
         $this->backup_compressioninfo = [
@@ -439,6 +479,19 @@ class Container {
 
     }
 
+    /**
+     * getFileInfos
+     * Erstellt für alle Dateien die im Backup enthalten sind Informationen über den inhaber und Dateiberechtigungn
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup]
+     * @return array  mit entsprechenden den Informationen [
+     * 'File' => Originaler Pfad zur Datei
+     * 'InArchive' => Pfad im Archiv
+     * 'Permissions' => Dateiberechtigungen (z.B. 0777)
+     * 'User' => Benutzer Inhaber (z.B. root)
+     * 'Group' => Grupper Inhaber (z.B. user)
+     * ]
+     */
     function getFileInfos($target_files) : array {
         $fileinfos = [];
         foreach($target_files as $file) {

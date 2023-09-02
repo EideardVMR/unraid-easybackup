@@ -572,7 +572,13 @@ class VM {
 
         return $output;
     }
-
+    
+    /**
+     * createBackup
+     * Erzeugt ein Backup
+     * @param  mixed $notify sendet eine Nachricht an Unraid
+     * @return bool
+     */
     public function createBackup($notify = false) : bool {
 
         $snapshot_commit = 'original';
@@ -742,7 +748,15 @@ class VM {
         return $backupstate;
 
     }
-    
+        
+    /**
+     * BackupUnCompressed
+     * Kopiert alle Dateien ohne Komprimierung
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup]
+     * @param  mixed $target_path Pfad zum Ziel
+     * @return bool true wenn es geklappt hat, sonst false
+     */
     private function BackupUnCompressed($target_files, $target_path) : bool {
         
         $this->backup_compressioninfo = [
@@ -787,7 +801,15 @@ class VM {
         return true;
 
     }
-
+    
+    /**
+     * BackupCompressZip
+     * Kopiert alle Dateien in eine ZipDatei
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup]
+     * @param  mixed $target_path Pfad zum Ziel
+     * @return bool true wenn es geklappt hat, sonst false
+     */
     private function BackupCompressZip($target_files, $target_path) : bool {
         
         $this->backup_compressioninfo = [
@@ -840,7 +862,15 @@ class VM {
         return true;
 
     }
-
+    
+    /**
+     * BackupCompressGz
+     * Kopiert alle Dateien ohne Komprimierung
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup, 'source' => Pfad innerhaln des Backups ohne Datei ]
+     * @param  mixed $target_path Pfad zum Ziel
+     * @return bool true wenn es geklappt hat, sonst false
+     */
     private function BackupCompressGz($target_files, $target_path) : bool{
 
         $this->backup_compressioninfo = [
@@ -894,7 +924,20 @@ class VM {
         return true;
 
     }
-
+    
+    /**
+     * getFileInfos
+     * Erstellt für alle Dateien die im Backup enthalten sind Informationen über den inhaber und Dateiberechtigungn
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup]
+     * @return array  mit entsprechenden den Informationen [
+     * 'File' => Originaler Pfad zur Datei
+     * 'InArchive' => Pfad im Archiv
+     * 'Permissions' => Dateiberechtigungen (z.B. 0777)
+     * 'User' => Benutzer Inhaber (z.B. root)
+     * 'Group' => Grupper Inhaber (z.B. user)
+     * ]
+     */
     function getFileInfos($target_files) : array {
         $fileinfos = [];
         foreach($target_files as $file) {
