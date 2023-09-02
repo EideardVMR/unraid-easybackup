@@ -63,7 +63,7 @@ class Config {
 
     #region Logging
     public static $LOG_WRITE = true;
-    public static $LOG_WRITE_PATH = __DIR__ . DIRECTORY_SEPARATOR . 'worker.log';
+    public static $LOG_WRITE_PATH = '/boot/config/easybackup/worker.log';
     public static $LOG_MAX_SIZE = 100 * 1024 * 1024;
     /**
      * 0 = Debug
@@ -102,9 +102,14 @@ class Config {
 
     public static function Load() {
 
-        if(!CheckFilesExists('/boot/config/plugins/easybackup/config.json')) {
+        if(!file_exists('/boot/config/plugins/easybackup/config.json')) {
             self::saveConfig();
             return;
+        }
+
+        if(!is_writable('/boot/config/plugins/easybackup/config.json')) {
+            echo "Not writeable config.json";
+            exit;
         }
 
         $cfg_json = file_get_contents('/boot/config/plugins/easybackup/config.json');
