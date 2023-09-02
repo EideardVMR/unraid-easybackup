@@ -1,5 +1,5 @@
 <?php
-require_once '/usr/local/emhttp/plugins/smbackup/includes/loader.php';
+require_once '/usr/local/emhttp/plugins/easybackup/includes/loader.php';
 
 if($_POST['action'] == 'create_snap') {
 
@@ -138,6 +138,19 @@ if($_POST['action'] == 'create_snap') {
 
     Config::$ENABLE_VM_BACKUP = $_POST['vm_enable'] == 'true';
     Config::$VM_BACKUP_PATH = $_POST['backup_location'];
+
+    
+    if(Config::saveConfig() === true) {
+        echo "OK";
+        exit;
+    } else {
+        echo "Failed";
+        exit;
+    }
+} else if($_POST['action'] == 'vm_settings'){
+
+    Config::$ENABLE_VM_BACKUP = $_POST['vm_enable'] == 'true';
+    Config::$VM_BACKUP_PATH = $_POST['backup_location'];
     
     if(Config::saveConfig() === true) {
         echo "OK";
@@ -195,13 +208,13 @@ if($_POST['action'] == 'create_snap') {
     exit;
 } else if($_POST['action'] == 'backupnow_vm'){
     
-    exec('php /usr/local/emhttp/plugins/smbackup/job.php backup vm "' . $_POST['vm'] . '" > /dev/null &');
+    exec('php /usr/local/emhttp/plugins/easybackup/job.php backup vm "' . $_POST['vm'] . '" > /dev/null &');
 
     echo "OK";
     exit;
 } else if($_POST['action'] == 'backupnow_container'){
     
-    exec('php /usr/local/emhttp/plugins/smbackup/job.php backup container "' . $_POST['container'] . '" > /dev/null &');
+    exec('php /usr/local/emhttp/plugins/easybackup/job.php backup container "' . $_POST['container'] . '" > /dev/null &');
 
     echo "OK";
     exit;

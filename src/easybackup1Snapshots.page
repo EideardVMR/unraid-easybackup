@@ -1,4 +1,4 @@
-Menu="smbackup:2"
+Menu="easybackup:2"
 Title="Snapshot Manager"
 Icon="clone"
 ---
@@ -113,7 +113,7 @@ Icon="clone"
     function createSnapshot(vm) {
         loading_view1(true);
 
-        $.post('/plugins/smbackup/actions.php', {action: 'create_snap', vm: vm}, (data) => {
+        $.post('/plugins/easybackup/actions.php', {action: 'create_snap', vm: vm}, (data) => {
             if(data == 'OK') {
                 location.reload();
             }
@@ -124,7 +124,7 @@ Icon="clone"
     function commitSnapshot(vm, target, to) {
         loading_view1(true);
 
-        $.post('/plugins/smbackup/actions.php', {action: 'commit_snap', vm: vm, target: target, to: to}, (data) => {
+        $.post('/plugins/easybackup/actions.php', {action: 'commit_snap', vm: vm, target: target, to: to}, (data) => {
             if(data == 'OK') {
                 location.reload();
             }
@@ -135,7 +135,7 @@ Icon="clone"
     function revertSnapshot(vm, to) {
         loading_view1(true);
 
-        $.post('/plugins/smbackup/actions.php', {action: 'revert_snap', vm: vm, to: to}, (data) => {
+        $.post('/plugins/easybackup/actions.php', {action: 'revert_snap', vm: vm, to: to}, (data) => {
             if(data == 'OK') {
                 location.reload();
             }
@@ -146,7 +146,7 @@ Icon="clone"
     function startVM(vm) {
         loading_view1(true);
 
-        $.post('/plugins/smbackup/actions.php', {action: 'startvm', vm: vm}, (data) => {
+        $.post('/plugins/easybackup/actions.php', {action: 'startvm', vm: vm}, (data) => {
             if(data == 'OK') {
                 loading_view1(false);
             }
@@ -156,7 +156,7 @@ Icon="clone"
     function stopVM(vm) {
         loading_view1(true);
 
-        $.post('/plugins/smbackup/actions.php', {action: 'stopvm', vm: vm}, (data) => {
+        $.post('/plugins/easybackup/actions.php', {action: 'stopvm', vm: vm}, (data) => {
             if(data == 'OK') {
                 loading_view1(false);
             }

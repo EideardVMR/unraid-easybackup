@@ -1,11 +1,11 @@
-Menu="smbackup:1"
+Menu="easybackup:1"
 Title="Dashboard"
 Icon="clone"
 ---
 
 <?php
 
-require_once '/usr/local/emhttp/plugins/smbackup/includes/loader.php';
+require_once '/usr/local/emhttp/plugins/easybackup/includes/loader.php';
 
 if ($var['fsState'] != "Started") {
     echo "<div class='notice shift'>"._(LANG_GUI_NOTE_ARRAY_OFFLINE).".</div>";
@@ -99,7 +99,7 @@ $vms = $kvm->getVMs();
     
     // Daten laden
     setInterval(() => {
-        $.get('/plugins/smbackup/status.php?type=jobs', (data) => {
+        $.get('/plugins/easybackup/status.php?type=jobs', (data) => {
             data = JSON.parse(data);            
             if(vm_state.length == 0 && container_state.length == 0) {
                 loading_view0(false);

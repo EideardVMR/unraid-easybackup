@@ -1,4 +1,4 @@
-Menu="smbackup:5"
+Menu="easybackup:5"
 Title="Settings"
 Icon="clone"
 ---
@@ -284,7 +284,7 @@ Icon="clone"
 
     function save_settings() {
         loading_view3(true);
-        $.post('/plugins/smbackup/actions.php', $("#settings_form").serialize(), (data) => {
+        $.post('/plugins/easybackup/actions.php', $("#settings_form").serialize(), (data) => {
             if(data == 'OK') {
                 location.reload();
             }

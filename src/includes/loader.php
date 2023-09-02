@@ -1,7 +1,7 @@
 <?php
 
 #echo "Debugmark L1<br>";
-$_pluginpath = '/usr/local/emhttp/plugins/smbackup/';
+$_pluginpath = '/usr/local/emhttp/plugins/easybackup/';
 #echo "Debugmark L2<br>";
 require_once $_pluginpath . 'includes/config.php';
 #echo "Debugmark L3<br>";

@@ -1,6 +1,6 @@
 <?php
 
-require_once '/usr/local/emhttp/plugins/smbackup/includes/loader.php';
+require_once '/usr/local/emhttp/plugins/easybackup/includes/loader.php';
 
 Log::$logging = false;
 
