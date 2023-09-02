@@ -47,6 +47,8 @@ class VM {
     private string|null $xml = null;
     public string|null $error = null;
     public int|null $lastSnapshotNumber = null;
+
+    public $backup_compressioninfo = [];
         
     /**
      * getBackingStore
@@ -571,13 +573,19 @@ class VM {
         return $output;
     }
 
-    public function createBackup(){
+    public function createBackup($notify = false){
+
+        $snapshot_commit = 'original';
 
         Log::LogDebug('VM: Start Backup "' . $this->name . '"');
         // Ablehnen wenn VM nicht im definierten Status ist. 
         if($this->state != VMState::STATE_RUNNING && $this->state != VMState::STATE_STOPPED) {
             Log::LogInfo('VM: Backup can not start in unsupported state. Backup aborted');
             $this->error = "VM must be started or stopped to backup it.";
+            // Nachricht senden
+            if($notify) {
+                sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, LANG_NOTIFY_INVALID_VM_STATE));
+            }
             return false;
         }
         
@@ -592,350 +600,316 @@ class VM {
         }
 
         // Backuppfad bestimmen
-        $target_path = Config::$VM_BACKUP_PATH . $this->name . '/';
-        Log::LogDebug('VM: Backuppath: ' . $target_path);
-        if(!CheckFilesExists($target_path)) {
-            Log::LogInfo('VM: Create Backuppath: ' . $target_path);
-            mkdir($target_path, 0777, true);
+        $target_path = Config::$VM_BACKUP_PATH . $this->name . '/' . date('Y-m-d_H.i');
+        Log::LogInfo('VM: Create Backuppath: ' . $target_path);
+
+        // Dateien zum Backup ermitteln
+        $copy_files = [];
+
+        // Nachricht senden
+        if($notify) {
+            sendNotification(sprintf(LANG_NOTIFY_START_BACKUP_VM, $this->name));
         }
 
-        // Backup erstellen mit Snapshot
+        // Snapshot erstellen und Dateien ermitteln
         if($this->state == VMState::STATE_RUNNING) {
-            
-            Log::LogDebug('VM: Backup of running maschine');
-
-            // Informationen commit des Snapshots sammeln
-            $snapshot_commit = 'original';
             if($this->lastSnapshotNumber !== null) {
                 $snapshot_commit = Config::$SNAPSHOT_EXTENSION . $this->lastSnapshotNumber;
             }
             Log::LogDebug('VM: After Backup commit to ' . $snapshot_commit);
 
-            // Nachricht senden
-            sendNotification(sprintf(LANG_NOTIFY_START_BACKUP_VM, $this->name));
-
-            // Job hinzufügen
-            Jobs::add(JobCategory::VM, 'backup', $this->uuid);
-
-            // Snapshot erstellen
-            $this->createSnapshot();
-            sleep(30);
-            $this->loadUsedDisks();
-
-            // Dateien bestimmen, die kopiert werden müssen.
-            $copy_files = [];
-            foreach($this->disks as $disk) {
-                foreach($disk['PreSource'] as $pre) {
-                    $copy_files[] = $pre;
-                    $pi = pathinfo($pre);
-                    $copy_files[] = $pi['dirname'] . '/' . $pi['extension'] . '.xml';
-                }
+            if(!$this->createSnapshot()){
+                return false;
             }
+            // Schlafen, damit alle Informationen stimmen.
+            sleep(5);
 
-            // Backup mit kompression
-            if(Config::$COMPRESS_BACKUP) {
+            // Dateien zusammensuchen
+            foreach($this->disks as $disk) {
 
-                // Backup ZIP Kompression
-                if(Config::$COMPRESS_TYPE == 'zip') {
-
-                    $target_filename = $target_path . date('Y-m-d_H.i') . '.zip';
-                    Log::LogInfo('VM: Compress Backup to Zip: ' . $target_filename);
-
-                    $zip = new ZipArchive();
-                    if($zip->open($target_filename, ZipArchive::CREATE) !== true) {
-
-                        sleep(30);
-                        $this->commitSnapshot($snapshot_commit);
-                        sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
-                        Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                        return false;
-
-                    }
-
-                    $fileinfos = [];
-                    foreach($copy_files as $file) {
-
-                        Log::LogDebug('VM: Add File "'.$file.'" to Zip!');
-
-                        $pi = pathinfo($file);
-                        if(!$zip->addFile($file, $pi['basename'])) {
-                            Log::LogError('VM: File "'.$file.'" could not add to Zip!');
-
-                            sleep(30);
-                            $this->commitSnapshot($snapshot_commit);
-                            sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'file can not compress'), 'warning');
-                            Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                            return false;
-
-                        }
-
-                        $fileinfos[] = [
-                            'File' => $file,
-                            'InArchive' => $pi['basename'],
-                            'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
-                            'User' => posix_getpwuid(fileowner($file))['name'],
-                            'Group' => posix_getgrgid(filegroup($file))['name']
-                        ];
-
-                    }
+                $exists_xml_paths = [];
+                foreach($disk['PreSource'] as $pre) {
                     
-                    $zip->addFromString('fileinfo.json', json_encode($fileinfos));
+                    $full_path = $pre;
+                    $pi = pathinfo($pre);
 
-                    if(!$zip->close()) {
-                        Log::LogError('VM: could not end Zipfile!');
-
-                        sleep(30);
-                        $this->commitSnapshot($snapshot_commit);
-                        sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'can not write ZipFile'), 'warning');
-                        Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                        return false;
-
-                    }
-
-
-                
-                // Backup GZ Komprimiert
-                } else if(Config::$COMPRESS_TYPE == 'tar.gz') {
-
-                    $target_filename = $target_path . date('Y-m-d_H.i') . '.tar.gz';
-                    Log::LogInfo('VM: Compress Backup to gz: ' . $target_filename);
-                    Log::LogWarning('VM: Actualy... for this compression is no restore supported!');
-
-                    $cmd = 'tar -czf "' . $target_filename . '" ';
-
-                    $fileinfos = [];
-                    foreach($copy_files as $file) {
-
-                        $pi = pathinfo($file);
-                        $cmd .= '"' . $file . '" ';
-
-                        $fileinfos[] = [
-                            'File' => $file,
-                            'InArchive' => $pi['basename'],
-                            'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
-                            'User' => posix_getpwuid(fileowner($file))['name'],
-                            'Group' => posix_getgrgid(filegroup($file))['name']
-                        ];
-
-                    }
-
-                    file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
-                    $cmd .= '"' . $target_path . 'fileinfo.json" ';
-                    Log::LogInfo('VM: Create Backup gz: ' . $cmd);
-                    exec($cmd);
-
-
-                    Log::LogInfo('VM: Delete: ' . $target_path . 'fileinfo.json');
-                    unlink($target_path . 'fileinfo.json');
- 
-                } else {
-                    Log::LogWarning('VM: Compression "'. Config::$COMPRESS_TYPE .'" is not supported');
-                    sleep(30);
-                    $this->commitSnapshot($snapshot_commit);
-                    sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
-                    Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                    return false;
-                }
-
-                Log::LogDebug('VM: End Backup');
-                sleep(30);
-                $this->commitSnapshot($snapshot_commit);
-                sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name), 'normal');
-                Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                return true;
-
-            // Backup ohne Kompression
-            } else {
-
-                $target_path = $target_path . date('Y-m-d_H.i') . '/';
-                Log::LogInfo('VM: Backup without Compression to: ' . $target_path);
-                mkdir($target_path, 0777, true);
-
-                $fileinfos = [];
-                foreach($copy_files as $file) {
-
-                    $pi = pathinfo($file);
-                    Log::LogDebug('VM: Copy File: ' . $file);
-                    copy($file, $target_path . $pi['basename']);
-
-                    $fileinfos[] = [
-                        'File' => $file,
-                        'InArchive' => $pi['basename'],
-                        'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
-                        'User' => posix_getpwuid(fileowner($file))['name'],
-                        'Group' => posix_getgrgid(filegroup($file))['name']
+                    $copy_files[] = [
+                        'full_path' => $full_path,
+                        'r_path' => $pi['basename'],
+                        'source' => $pi['dirname'] . '/'
                     ];
 
-                    file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
-
+                    if(in_array($pi['dirname'] . '/' . $pi['extension'] . '.xml', $exists_xml_paths)) { continue; }
+                    $copy_files[] = [
+                        'full_path' => $pi['dirname'] . '/' . $pi['extension'] . '.xml',
+                        'r_path' =>  $pi['extension'] . '.xml',
+                        'source' => $pi['dirname'] . '/'
+                    ];
+                    
+                    $exists_xml_paths[] = $pi['dirname'] . '/' . $pi['extension'] . '.xml';
                 }
 
             }
-            
 
-            // Snapshot zurückspielen, Benachrichtigung senden
-            sleep(30);
-            $this->commitSnapshot($snapshot_commit);
-            sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name));
-            Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-            return true;
-
-        // Backup erstellen OHNE Snapshot
+        // Nur Dateien ermitteln
         } else if($this->state == VMState::STATE_STOPPED) {
 
-            Log::LogDebug('VM: Backup of offline maschine');
-
-            // Nachricht senden
-            sendNotification(sprintf(LANG_NOTIFY_START_BACKUP_VM, $this->name));
-
-            // Job hinzufügen
-            Jobs::add(JobCategory::VM, 'backup', $this->uuid);
-
-            $this->loadUsedDisks();
-
-            // Dateien bestimmen, die kopiert werden müssen.
-            $copy_files = [];
             foreach($this->disks as $disk) {
-                $copy_files[] = $disk['Source'];
+                    
+                $full_path = $disk['Source'];
                 $pi = pathinfo($disk['Source']);
-                $copy_files[] = $pi['dirname'] . '/' . $pi['extension'] . '.xml';
+
+                $copy_files[] = [
+                    'full_path' => $full_path,
+                    'r_path' => $pi['basename'],
+                    'source' => $pi['dirname'] . '/'
+                ];
+
+                $copy_files[] = [
+                    'full_path' => $pi['dirname'] . '/' . $pi['extension'] . '.xml',
+                    'r_path' =>  $pi['extension'] . '.xml',
+                    'source' => $pi['dirname'] . '/'
+                ];
+
+                $exists_xml_paths = [];
                 foreach($disk['PreSource'] as $pre) {
-                    $copy_files[] = $pre;
+                    
+                    $full_path = $pre;
                     $pi = pathinfo($pre);
-                    $copy_files[] = $pi['dirname'] . '/' . $pi['extension'] . '.xml';
-                }
-            }
 
-            if(Config::$COMPRESS_BACKUP) {
-                // Backup ZIP Kompression
-                if(Config::$COMPRESS_TYPE == 'zip') {
-                
-                    
-                    $target_filename = $target_path . date('Y-m-d_H.i') . '.zip';
-                    Log::LogInfo('VM: Compress Backup to Zip: ' . $target_filename);
-
-                    $zip = new ZipArchive();
-                    if($zip->open($target_filename, ZipArchive::CREATE) !== true) {
-
-                        sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'invalid compression type'), 'warning');
-                        Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                        return false;
-
-                    }
-
-                    $fileinfos = [];
-                    foreach($copy_files as $file) {
-
-                        Log::LogDebug('VM: Add File "'.$file.'" to Zip!');
-
-                        $pi = pathinfo($file);
-                        if(!$zip->addFile($file, $pi['basename'])) {
-                            Log::LogError('VM: File "'.$file.'" could not add to Zip!');
-
-                            sleep(30);
-                            sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'file can not compress'), 'warning');
-                            Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                            return false;
-
-                        }
-
-                        $fileinfos[] = [
-                            'File' => $file,
-                            'InArchive' => $pi['basename'],
-                            'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
-                            'User' => posix_getpwuid(fileowner($file))['name'],
-                            'Group' => posix_getgrgid(filegroup($file))['name']
-                        ];
-
-                    }
-                    
-                    $zip->addFromString('fileinfo.json', json_encode($fileinfos));
-
-                    if(!$zip->close()) {
-                        Log::LogError('VM: could not end Zipfile!');
-
-                        sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, 'can not write ZipFile'), 'warning');
-                        Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-                        return false;
-
-                    }
-                
-                // Backup GZ Komprimiert
-                } else if(Config::$COMPRESS_TYPE == 'tar.gz') {
-
-                    $target_filename = $target_path . date('Y-m-d_H.i') . '.tar.gz';
-                    Log::LogInfo('VM: Compress Backup to gz: ' . $target_filename);
-                    Log::LogWarning('VM: Actualy... for this compression is no restore supported!');
-
-                    $cmd = 'tar -czf "' . $target_filename . '" ';
-
-                    $fileinfos = [];
-                    foreach($copy_files as $file) {
-
-                        $pi = pathinfo($file);
-                        $cmd .= '"' . $file . '" ';
-
-                        $fileinfos[] = [
-                            'File' => $file,
-                            'InArchive' => $pi['basename'],
-                            'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
-                            'User' => posix_getpwuid(fileowner($file))['name'],
-                            'Group' => posix_getgrgid(filegroup($file))['name']
-                        ];
-
-                    }
-
-                    file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
-                    $cmd .= '"' . $target_path . 'fileinfo.json" ';
-                    Log::LogInfo('VM: Create Backup gz: ' . $cmd);
-                    exec($cmd);
-
-
-                    Log::LogInfo('VM: Delete: ' . $target_path . 'fileinfo.json');
-                    unlink($target_path . 'fileinfo.json');
-                
-                // Backup ohne Kompression
-                } else {
-
-                }
-
-            } else {
-
-                $target_path = $target_path . date('Y-m-d_H.i') . '/';
-                Log::LogInfo('VM: Backup without Compression to: ' . $target_path);
-                mkdir($target_path, 0777, true);
-
-                $fileinfos = [];
-                foreach($copy_files as $file) {
-
-                    $pi = pathinfo($file);
-                    Log::LogDebug('VM: Copy File: ' . $file);
-                    copy($file, $target_path . $pi['basename']);
-
-                    $fileinfos[] = [
-                        'File' => $file,
-                        'InArchive' => $pi['basename'],
-                        'Permissions' => substr(sprintf('%o', fileperms($file)), -4),
-                        'User' => posix_getpwuid(fileowner($file))['name'],
-                        'Group' => posix_getgrgid(filegroup($file))['name']
+                    $copy_files[] = [
+                        'full_path' => $full_path,
+                        'r_path' => $pi['basename'],
+                        'source' => $pi['dirname'] . '/'
                     ];
 
-                    file_put_contents($target_path . 'fileinfo.json', json_encode($fileinfos));
+                    if(in_array($pi['dirname'] . '/' . $pi['extension'] . '.xml', $exists_xml_paths)) { continue; }
+                    $copy_files[] = [
+                        'full_path' => $pi['dirname'] . '/' . $pi['extension'] . '.xml',
+                        'r_path' =>  $pi['extension'] . '.xml',
+                        'source' => $pi['dirname'] . '/'
+                    ];
+                    
+                    $exists_xml_paths[] = $pi['dirname'] . '/' . $pi['extension'] . '.xml';
 
                 }
 
             }
-
-            Log::LogDebug('VM: End Backup');
-            // Benachrichtigung senden
-            sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name));
-            Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
-            return true;
 
         }
 
+        $backupstate = false;
+        // Backup mit kompression
+        if(Config::$COMPRESS_BACKUP) {
+
+            if(Config::$COMPRESS_TYPE == 'zip') {
+
+                $backupstate = $this->BackupCompressZip($copy_files, $target_path);
+
+            } else if(Config::$COMPRESS_TYPE == 'tar.gz') {
+
+                $backupstate = $this->BackupCompressGz($copy_files, $target_path);
+
+            }
+
+        } else {
+
+            $backupstate = $this->BackupUnCompressed($copy_files, $target_path);
+
+        }
+
+        // Snapshot commit
+        if($this->state == VMState::STATE_RUNNING) {
+            if(!$this->commitSnapshot($snapshot_commit)) {
+        
+                // Nachricht senden
+                if($notify) {
+                    sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, LANG_NOTIFY_SNAPSHOT_COMMIT_FAILED));
+                }
+                return false;
+            }
+        }
+
+        // Nachricht senden
+        if($notify) {
+            sendNotification(sprintf(LANG_NOTIFY_END_BACKUP_VM, $this->name));
+        }
+
+        return $backupstate;
+
     }
     
+    private function BackupUnCompressed($target_files, $target_path){
+        
+        $this->backup_compressioninfo = [
+            'Files' => 0,
+            'OriginalSize' => 0,
+            'CompressedSize' => 0,
+            'Time' => 0
+        ];
+
+        $target_path .= '/';
+        Log::LogInfo('Container: Backup without Compression to: ' . $target_path);
+
+        if(!CheckFilesExists($target_path)) {
+            mkdir($target_path, 0777, true);
+        }
+
+        $starttime = time();
+        foreach($target_files as $tf) {
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += filesize($tf['full_path']);
+            $this->backup_compressioninfo['CompressedSize'] += filesize($tf['full_path']);
+
+            $pi = pathinfo($target_path . $tf['r_path']);
+            if(!CheckFilesExists($pi['dirname'] . '/')) {
+                mkdir($pi['dirname'] . '/', 0777, true);
+            }
+
+            if(!copy($tf['full_path'], $target_path . $tf['r_path'])) {
+                Log::LogError('Container: Could not create "' . $tf['full_path'] . '"');
+                return false;
+            }
+        }
+
+        if(file_put_contents($target_path . 'fileinfo.json', json_encode($this->getFileInfos($target_files))) === false){
+            Log::LogError('Container: Could not create fileinfo.json');
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += strlen(json_encode($this->getFileInfos($target_files)));
+            return false;
+        }
+        $this->backup_compressioninfo['Time'] = time() - $starttime;
+
+        return true;
+
+    }
+
+    private function BackupCompressZip($target_files, $target_path){
+        
+        $this->backup_compressioninfo = [
+            'Files' => 0,
+            'OriginalSize' => 0,
+            'CompressedSize' => 0,
+            'Time' => 0
+        ];
+
+        $target_path .= '.zip';
+        $pi = pathinfo($target_path);
+        if(!CheckFilesExists($pi['dirname'] . '/')) {
+            mkdir($pi['dirname'] . '/', 0777, true);
+        }
+
+        Log::LogInfo('Container: Backup with Zip Compression to: ' . $target_path);
+
+        $zip = new ZipArchive();
+        if(!$zip->open($target_path, ZipArchive::CREATE)) {
+            return false;
+        }
+
+        $starttime = time();
+        foreach($target_files as $tf) {
+            
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += filesize($tf['full_path']);
+            
+            if(!$zip->addFile($tf['full_path'], $tf['r_path'])){
+                Log::LogError('Container: Could not create "' . $tf['full_path'] . '"');
+                return false;
+            }
+        }
+
+        if(!$zip->addFromString('fileinfo.json', json_encode($this->getFileInfos($target_files)))) {
+            Log::LogError('Container: Could not create fileinfo.json');
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += strlen(json_encode($this->getFileInfos($target_files)));
+            return false;
+        }
+
+        if(!$zip->close()) {
+            Log::LogError('Container: Could not close archive: ' . $target_path);
+            return false;
+        }
+
+        $this->backup_compressioninfo['CompressedSize'] += filesize($target_path);
+        $this->backup_compressioninfo['Time'] = time() - $starttime;
+
+        return true;
+
+    }
+
+    private function BackupCompressGz($target_files, $target_path){
+
+        $this->backup_compressioninfo = [
+            'Files' => 0,
+            'OriginalSize' => 0,
+            'CompressedSize' => 0,
+            'Time' => 0
+        ];
+
+        $target_path .= '.tar.gz';
+        $pi = pathinfo($target_path);
+        if(!CheckFilesExists($pi['dirname'] . '/')) {
+            mkdir($pi['dirname'] . '/', 0777, true);
+        }
+
+        Log::LogInfo('Container: Backup with GZ Compression to: ' . $target_path);
+
+        $command = 'tar -czf ' . $target_path;       
+        foreach($target_files as $tf) {
+            
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += filesize($tf['full_path']);
+
+            $command .= ' -C "' . $tf['source'] . '" "' . $tf['r_path'] . '"';
+
+        }
+
+        if(file_put_contents($pi['dirname'] . '/fileinfo.json', json_encode($this->getFileInfos($target_files))) === false){
+            Log::LogError('Container: Could not create fileinfo.json');
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += filesize($pi['dirname'] . '/fileinfo.json');
+            return false;
+        }
+        $command .= ' -C "' . $pi['dirname'] . '/" "fileinfo.json"';
+
+        Log::LogDebug('Start Backup: ' . $command);
+
+        $starttime = time();
+        exec($command, $exec_output);
+
+        unlink($pi['dirname'] . '/mounts.json');
+        unlink($pi['dirname'] . '/fileinfo.json');
+
+        if(count($exec_output)>0) {
+            return false;
+        }
+
+        $this->backup_compressioninfo['CompressedSize'] += filesize($target_path);
+        $this->backup_compressioninfo['Time'] = time() - $starttime;
+
+        return true;
+
+    }
+
+    function getFileInfos($target_files){
+        $fileinfos = [];
+        foreach($target_files as $file) {
+    
+            $pi = pathinfo($file['full_path']);
+    
+            $fileinfos[] = [
+                'File' => $file['full_path'],
+                'InArchive' => $file['r_path'],
+                'Permissions' => substr(sprintf('%o', fileperms($file['full_path'])), -4),
+                'User' => posix_getpwuid(fileowner($file['full_path']))['name'],
+                'Group' => posix_getgrgid(filegroup($file['full_path']))['name']
+            ];
+    
+        }
+    
+        return $fileinfos;
+    }
+
 }
 
 class KVM {
