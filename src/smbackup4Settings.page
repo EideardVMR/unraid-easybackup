@@ -2,3 +2,295 @@ Menu="smbackup:5"
 Title="Settings"
 Icon="clone"
 ---
+
+<?php
+?>
+
+<style>
+.fileTree{
+    background:#121510;
+    width:300px;
+    max-height:150px;
+    overflow-y:scroll;
+    overflow-x:hidden;
+    position:relative;
+    z-index:100;
+    display:none;
+    position: absolute;
+}
+</style>
+
+<link type="text/css" rel="stylesheet" href="/webGui/styles/jquery.filetree.css?v=1676050400">
+<link type="text/css" rel="stylesheet" href="/webGui/styles/jquery.switchbutton.css?v=1548293345">
+<script type="text/javascript" src="/webGui/javascript/jquery.filetree.js?v=1638550562"></script>
+<script type="text/javascript" src="/webGui/javascript/jquery.switchbutton.js?v=1535741906"></script>
+<form action="" id="settings_form" onsubmit="return false;">
+    <input type="hidden" name="action" value="settings">
+    <div class="title">
+        <span class="left"><?=LANG_GUI_HEADER_VMS?></span>
+    </div>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help1')">Enable Backups:</dt>
+        <dd>
+            <select name="ENABLE_VM_BACKUP" id="">
+                <option value="true" <?= (Config::$ENABLE_VM_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                <option value="false" <?= (!Config::$ENABLE_VM_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+            </select>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help1">
+        <p>Enable or disable automatic backups for virtual machines</p>
+    </blockquote>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help2')">Backup location:</dt>
+        <dd>
+            <input 
+                type="text" 
+                id="VM_BACKUP_PATH" 
+                name="VM_BACKUP_PATH" 
+                autocomplete="off" 
+                spellcheck="false" 
+                data-pickroot="/mnt/" 
+                data-pickfolders="true"
+                data-pickfilter="NO_FILES_FILTER"
+                pattern="^\/mnt\/(([\w.-]+)( [\w.-]+)*)*(\/(([\w.-]+)( [\w.-]+)*)*)*$"
+                value="<?=Config::$VM_BACKUP_PATH?>" 
+                placeholder="Select a backup location" 
+                style="display: inline-block;">
+            <div class="textarea fileTree"></div>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help2">
+        <p>Specify the location for the backups. A folder with the name of the respective VM is created automatically.</p>
+    </blockquote>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help3')">Snapshot extension:</dt>
+        <dd><input type="text" name="SNAPSHOT_EXTENSION" value="<?=Config::$SNAPSHOT_EXTENSION?>"></dd>
+    </dl>
+    <blockquote style="display: none;" id="help3">
+        <p>Set the file extension for virtual machine snapshots.</p>
+        <p style="font-weight: bold;">You should set the name only if no backups exist yet. Restoring the backups will not be possible otherwise!</p>
+    </blockquote>
+
+    <div class="title">
+        <span class="left"><?=LANG_GUI_HEADER_CONTAINER?></span>
+    </div>
+    <dl>
+        <dt style="cursor: help" onclick="help('help4')">Enable Backups:</dt>
+        <dd>
+            <select name="ENABLE_APPDATA_BACKUP" id="">
+                <option value="true" <?= (Config::$ENABLE_APPDATA_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                <option value="false" <?= (!Config::$ENABLE_APPDATA_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+            </select>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help4">
+        <p>Enable or disable automatic backups for docker container</p>
+    </blockquote>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help5')">Backup location:</dt>
+        <dd>
+            <input 
+                type="text" 
+                id="APPDATA_BACKUP_PATH" 
+                name="APPDATA_BACKUP_PATH" 
+                autocomplete="off" 
+                spellcheck="false" 
+                data-pickroot="/mnt/" 
+                data-pickfolders="true"
+                data-pickfilter="NO_FILES_FILTER"
+                pattern="^\/mnt\/(([\w.-]+)( [\w.-]+)*)*(\/(([\w.-]+)( [\w.-]+)*)*)*$"
+                value="<?=Config::$APPDATA_BACKUP_PATH?>" 
+                placeholder="Select a backup location" 
+                style="display: inline-block;">
+            <div class="textarea fileTree"></div>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help5">
+        <p>Specify the location for the backups. A folder with the name of the respective VM is created automatically.</p>
+    </blockquote>
+
+
+    <div class="title">
+        <span class="left"><?=LANG_GUI_HEADER_COMPRESSOION?></span>
+    </div>
+    <dl>
+        <dt style="cursor: help" onclick="help('help6')">Enable Compression:</dt>
+        <dd>
+            <select name="COMPRESS_BACKUP" id="">
+                <option value="true" <?= (Config::$COMPRESS_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                <option value="false" <?= (!Config::$COMPRESS_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+            </select>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help6">
+        <p>Enable or disable the creation of compressed backups. Non-compressed backups require significantly more memory, but are completed faster.</p>
+    </blockquote>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help7')">Compression Type:</dt>
+        <dd>
+            <select name="COMPRESS_TYPE" id="">
+                <option value="zip" <?= (Config::$COMPRESS_TYPE ? 'selected' : '' ) ?>>Zip (recommended)</option>
+                <option value="tar.gz" <?= (!Config::$COMPRESS_TYPE ? 'selected' : '' ) ?>>GZ</option>
+            </select>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help7">
+        <p>
+            <span style="font-weight: bold">ZIP Compression: </span>
+            Sie ist langsamer als die GZ Komprimierung einer tar datei. Allerdings hat sie den Vorteil, dass einzelne Dateien aus der Zipdatei entnommen werden können ohne das ganze Archiv zu entpacken.
+        </p>
+        <p>
+            <span style="font-weight: bold">GZ Compression: </span>
+            A backup as GZ is faster than ZIP, but the files are in a tar container. Individual files can not be taken out! Choose this option wisely!
+            <span style="font-weight: bold">An automatic restore from this archive is currently NOT supported.</span>
+        </p>
+        <p>The advantage of a tar archive to store the permissions of the files is not relevant here because this information is also contained in the ZIP file as fileinfo.json. These are also taken into account and applied when restoring. </p>
+    </blockquote>
+
+    <div class="title">
+        <span class="left"><?=LANG_GUI_HEADER_BACKUPS?></span>
+    </div>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help8')">Max. daily backups:</dt>
+        <dd>
+            <input type="number" name="MAX_CONSECUTIVE_BACKUPS" value="<?=Config::$MAX_CONSECUTIVE_BACKUPS?>">
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help8">
+        <p>Number of days for which a backup is to be kept. Default is 7</p>
+    </blockquote>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help9')">Max. week backups:</dt>
+        <dd>
+            <input type="number" name="MAX_WEEK_BACKUPS" value="<?=Config::$MAX_WEEK_BACKUPS?>">
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help9">
+        <p>Number of weeks for which a backup is to be kept. Default is 5</p>
+    </blockquote>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help10')">Max. month backups:</dt>
+        <dd>
+            <input type="number" name="MAX_MONTH_BACKUPS" value="<?=Config::$MAX_MONTH_BACKUPS?>">
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help10">
+        <p>Number of months for which a backup is to be kept. Default is 12</p>
+    </blockquote>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help11')">Max. year backups:</dt>
+        <dd>
+            <input type="number" name="MAX_YEAR_BACKUPS" value="<?=Config::$MAX_YEAR_BACKUPS?>">
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help11">
+        <p>Number of years for which a backup is to be kept. Default is 10</p>
+    </blockquote>
+
+    <div class="title">
+        <span class="left"><?=LANG_GUI_HEADER_GOTIFY?></span>
+    </div>
+    <dl>
+        <dt style="cursor: help" onclick="help('help12')">Enable Gotify Push Notification:</dt>
+        <dd>
+            <select name="GOTIFY_ENABLED" id="GOTIFY_ENABLED">
+                <option value="true" <?= (Config::$GOTIFY_ENABLED ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                <option value="false" <?= (!Config::$GOTIFY_ENABLED ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+            </select>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help12">
+        <p>Gotify is a notification tool. You can install it as an app in your Unraid. With a public address and the app on your phone, you can receive the messages.</p>
+    </blockquote>
+
+    <div id="block_gotify">
+        <dl>
+            <dt style="cursor: help" onclick="help('help13')">Server Address:</dt>
+            <dd>
+                <input type="number" name="GOTIFY_SERVER" value="<?=Config::$GOTIFY_SERVER?>" placeholder="http://example.com/">
+            </dd>
+        </dl>
+        <blockquote style="display: none;" id="help13">
+            <p>Specify the server address to which the message should be sent.</p>
+        </blockquote>
+
+        <dl>
+            <dt style="cursor: help" onclick="help('help14')">Token:</dt>
+            <dd>
+                <input type="number" name="GOTIFY_TOKEN" value="<?=Config::$GOTIFY_TOKEN?>" placeholder="xrx4xJTA69dz8Zy <-- example!!!">
+            </dd>
+        </dl>
+        <blockquote style="display: none;" id="help14">
+            <p>The token you created to get access to the application. 
+                You can find instructions on how to create a token here:
+            </p>
+            <p><a href="https://gist.github.com/mcnaveen/2788985648490e7b3af24647247ed4e7">https://gist.github.com/mcnaveen/2788985648490e7b3af24647247ed4e7</a></p>
+        </blockquote>
+        <dl>
+            <dt style="cursor: help" onclick="help('help15')">Notification on completed backup:</dt>
+            <dd>
+                <select name="GOTIFY_PUSH_ON_COMPLETE" id="">
+                    <option value="true" <?= (Config::$GOTIFY_PUSH_ON_COMPLETE ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                    <option value="false" <?= (!Config::$GOTIFY_PUSH_ON_COMPLETE ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+                </select>
+            </dd>
+        </dl>
+        <blockquote style="display: none;" id="help15">
+            <p>Sends a message when the backup is successfully created</p>
+        </blockquote>
+        <dl>
+            <dt style="cursor: help" onclick="help('help16')">Notification on error:</dt>
+            <dd>
+                <select name="GOTIFY_PUSH_ON_ERROR" id="">
+                    <option value="true" <?= (Config::$GOTIFY_PUSH_ON_ERROR ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                    <option value="false" <?= (!Config::$GOTIFY_PUSH_ON_ERROR ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+                </select>
+            </dd>
+        </dl>
+        <blockquote style="display: none;" id="help16">
+            <p>Sends a message that an error has occurred during backup</p>
+        </blockquote>
+    </div>
+</form>
+
+<button onClick="save_settings()"><?=_(LANG_GUI_BTN_SAVE)?></button>
+
+
+<script>
+
+    $('#GOTIFY_ENABLED').on('change', function(e) {
+        if($('#GOTIFY_ENABLED > option:selected').val() == 'true') {
+            $('#block_gotify').show();
+        } else {
+            $('#block_gotify').hide();
+        }
+    });
+
+    function help(id){
+        $('#' + id).slideToggle();
+    }
+
+    $('#settings_form input[data-pickroot]').fileTreeAttach();
+
+    function save_settings() {
+        loading_view3(true);
+        $.post('/plugins/smbackup/actions.php', $("#settings_form").serialize(), (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view3(false);
+        });
+    };
+
+    $('#GOTIFY_ENABLED').change();
+</script>

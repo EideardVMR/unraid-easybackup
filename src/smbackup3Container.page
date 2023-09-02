@@ -146,58 +146,11 @@ $container_list = $docker->getContainers();
     </table>
 </form>
 <button onClick="save_container_ignore_backup()"><?=_(LANG_GUI_BTN_SAVE)?></button>
-
-<div class="title">
-    <span class="left"><?=LANG_GUI_HEADER_SETTINGS?></span>
-</div>
-
-<div style="display: flex; justify-content:center;">
-    <div>
-        <form action="" id="container_setting_form">
-            <input type="hidden" name="action" value="container_settings">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>Enable Backups:</td>
-                        <td>
-                            <select name="container_enable" id="">
-                                <option value="true" <?= (Config::$ENABLE_APPDATA_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
-                                <option value="false" <?= (!Config::$ENABLE_APPDATA_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Backup location:</td>
-                        <td>
-                            <input 
-                                type="text" 
-                                name="backup_location" 
-                                value="<?=Config::$APPDATA_BACKUP_PATH?>" 
-                                placeholder="Select a backup location" 
-                            >
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </form>
-        <button onClick="save_container_settings()"><?=_(LANG_GUI_BTN_SAVE)?></button>
-    </div>
-</div>
 <script>
 
     function save_container_ignore_backup(){
         loading_view3(true);
         $.post('/plugins/smbackup/actions.php', $("#container_ignore_form").serialize(), (data) => {
-            if(data == 'OK') {
-                location.reload();
-            }
-            loading_view3(false);
-        });
-    };
-
-    function save_container_settings() {
-        loading_view3(true);
-        $.post('/plugins/smbackup/actions.php', $("#container_setting_form").serialize(), (data) => {
             if(data == 'OK') {
                 location.reload();
             }

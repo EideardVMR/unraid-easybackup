@@ -74,7 +74,21 @@ $vms = $kvm->getVMs();
     }
 </style>
 
+
+
+
+
 <script>    
+
+    function loading_view0(type) {
+        if(type) {
+            $('#spinnerbg_view0').css('display', 'block');
+            $('#spinner_view0').css('display', 'block');
+        } else {
+            $('#spinnerbg_view0').css('display', 'none');
+            $('#spinner_view0').css('display', 'none');
+        }
+    }
 
     function toggle_block(id){
         $('.' + id).toggle();
@@ -86,8 +100,11 @@ $vms = $kvm->getVMs();
     // Daten laden
     setInterval(() => {
         $.get('/plugins/smbackup/status.php?type=jobs', (data) => {
-            data = JSON.parse(data);
-            console.log(data);
+            data = JSON.parse(data);            
+            if(vm_state.length == 0 && container_state.length == 0) {
+                loading_view0(false);
+            }
+
             vm_state = data.vms;
             container_state = data.container;
         });
@@ -116,3 +133,7 @@ $vms = $kvm->getVMs();
         <path d="m70,19.24zm-63.46,38.49l-6.54,0l0,-38.49l6.54,0l0,38.49z" fill="url(#unraid_logo)" class="unraid_mark_1"></path>
     </svg>
 </div>
+
+<script>
+    loading_view0(true);
+</script>

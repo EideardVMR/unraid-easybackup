@@ -25,6 +25,10 @@ define('LANG_GUI_SECURITYNOTE_VMBACKUPDISABLED','VM BACKUP IS DISABLED');
 // Überschriften
 define('LANG_GUI_HEADER_BACKUPS', 'Backups');
 define('LANG_GUI_HEADER_SETTINGS', 'Settings');
+define('LANG_GUI_HEADER_VMS', 'VMs');
+define('LANG_GUI_HEADER_CONTAINER', 'Container');
+define('LANG_GUI_HEADER_COMPRESSOION', 'Compression');
+define('LANG_GUI_HEADER_GOTIFY', 'Gotify');
 
 // Tabellen Spaltennamen
 define('LANG_GUI_TABLE_COL_NAME', 'Name');
