@@ -281,6 +281,19 @@ Icon="clone"
             </p>
             <p><a href="https://gist.github.com/mcnaveen/2788985648490e7b3af24647247ed4e7">https://gist.github.com/mcnaveen/2788985648490e7b3af24647247ed4e7</a></p>
         </blockquote>
+
+        <dl>
+            <dt onclick="help('help16')">Message on Complete:</dt>
+            <dd>
+                <input type="text" name="GOTIFY_COMPLETE_MESSAGE" value="<?=Config::$GOTIFY_COMPLETE_MESSAGE?>" placeholder="xrx4xJTA69dz8Zy <-- example!!!">
+            </dd>
+        </dl>
+        <blockquote style="display: none;">
+            <p>The token you created to get access to the application. 
+                You can find instructions on how to create a token here:
+            </p>
+            <p><a href="https://gist.github.com/mcnaveen/2788985648490e7b3af24647247ed4e7">https://gist.github.com/mcnaveen/2788985648490e7b3af24647247ed4e7</a></p>
+        </blockquote>
         <dl>
             <dt style="cursor: help" onclick="help('help17')">Notification on completed backup:</dt>
             <dd>

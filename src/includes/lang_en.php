@@ -81,6 +81,7 @@ define('LANG_NOTIFY_FULLBACKUP_START','Backup started');
 define('LANG_NOTIFY_FULLBACKUP_END','Backup completed.<br>%s');
 define('LANG_NOTIFY_FULLBACKUP_FAILED','Backup failed');
 define('LANG_NOTIFY_INVALID_VM_STATE','State of VM is not supported');
+define('LANG_NOTIFY_GOTIFY_ERRORS','Backup completed with errors.');
 
 // Nachrichten
 define('LAMG_MSG_CONTAINER_TIMEOUT_FOR_START', 'Start container timeout');

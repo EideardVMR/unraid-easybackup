@@ -59,6 +59,8 @@ class Config {
     public static $GOTIFY_PUSH_ON_COMPLETE = true;
     /** Sendet eine Nachricht wenn der Job mit Fehlern beendet wurde. */
     public static $GOTIFY_PUSH_ON_ERROR = true;
+    /** Nachricht die bei beendet des Backups abgesendet wird. */
+    public static $GOTIFY_COMPLETE_MESSAGE = 'Backup Completed';
     #endregion
 
     #region Logging

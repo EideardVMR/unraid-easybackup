@@ -57,8 +57,17 @@ if(($argv[1] ?? '') == 'backup') {
             date_default_timezone_set($tz);
 
             sendNotification(sprintf(LANG_NOTIFY_FULLBACKUP_END, $tmp), 'normal');
+
+            if(Config::$GOTIFY_ENABLED && Config::$GOTIFY_PUSH_ON_COMPLETE) {
+                GotifyPush(Config::$GOTIFY_COMPLETE_MESSAGE, 'Easy Backup');
+            }
+
         } else {
             sendNotification(LANG_NOTIFY_FULLBACKUP_FAILED, 'alert');
+
+            if(Config::$GOTIFY_ENABLED && Config::$GOTIFY_PUSH_ON_ERROR) {
+                GotifyPush(LANG_NOTIFY_GOTIFY_ERRORS, 'Easy Backup');
+            }
         }
 
     }

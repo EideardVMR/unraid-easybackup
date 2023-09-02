@@ -159,6 +159,7 @@ if($_POST['action'] == 'create_snap') {
     Config::$GOTIFY_TOKEN = $_POST['GOTIFY_TOKEN'];
     Config::$GOTIFY_PUSH_ON_COMPLETE = $_POST['GOTIFY_PUSH_ON_COMPLETE'] == 'true';
     Config::$GOTIFY_PUSH_ON_ERROR = $_POST['GOTIFY_PUSH_ON_ERROR'] == 'true';
+    Config::$GOTIFY_COMPLETE_MESSAGE = $_POST['GOTIFY_COMPLETE_MESSAGE'];
 
     Config::$LOG_LEVEL = $_POST['LOG_LEVEL'];
     
