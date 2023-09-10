@@ -31,8 +31,12 @@ $chart_pi_vm = [];
 $chart_pi_container = [];
 
 foreach($vms as $vm) {
-    foreach($vm->getStoredBackups() as $backup) {
+    
+    $backups = $vm->getStoredBackups();
+    foreach($backups as $key => $backup) {
+
         $chart_pi_vm[$vm->name] += $backup['Size'];
+
     }
 }
 
@@ -41,7 +45,8 @@ foreach($chart_pi_vm as &$pi) {
 }
 
 foreach($container_list as $container) {
-    foreach($container->getStoredBackups() as $backup) {
+    $backups = $container->getStoredBackups();
+    foreach($backups as $backup) {
         $chart_pi_container[$container->name] += $backup['Size'];
     }
 }
@@ -49,6 +54,7 @@ foreach($container_list as $container) {
 foreach($chart_pi_container as &$pi) {
     $pi = round( $pi / 1024 / 1024 / 1024, 2 );
 }
+
 ?>
 
 <script src="/plugins/easybackup/apexcharts/apexcharts.js"></script>
@@ -99,6 +105,8 @@ foreach($chart_pi_container as &$pi) {
         color: #000;
     }
 </style>
+
+
 
 <div style="display: flex; flex-wrap: wrap; justify-content:space-around; ">
     <div style="width: 600px">
