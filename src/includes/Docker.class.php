@@ -11,6 +11,8 @@ class Container {
 
     public $backup_compressioninfo = [];
 
+    private $stored_backups = null;
+
     function getClient() {
         if($this->client === null) {
             $this->client = new DockerClient('/var/run/docker.sock');
@@ -102,6 +104,11 @@ class Container {
      * @return array 
      */
     public function getStoredBackups() : array {
+
+
+        if($this->stored_backups !== null) {
+            return $this->stored_backups;
+        }
 
         $output = [];
         $files = scandir(Config::$APPDATA_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR);

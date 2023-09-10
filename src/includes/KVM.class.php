@@ -49,6 +49,8 @@ class VM {
     public int|null $lastSnapshotNumber = null;
 
     public $backup_compressioninfo = [];
+
+    private $stored_backups = null;
         
     /**
      * getBackingStore
@@ -526,6 +528,10 @@ class VM {
      * @return array 
      */
     public function getStoredBackups() : array {
+
+        if($this->stored_backups !== null) {
+            return $this->stored_backups;
+        }
 
         $output = [];
         $files = scandir(Config::$VM_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR);
