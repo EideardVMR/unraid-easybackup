@@ -3,12 +3,6 @@ Title="Container"
 Icon="clone"
 ---
 
-<?php
-
-$docker = new Docker();
-$container_list = $docker->getContainers();
-?>
-
 <form action="" id="container_ignore_form" onsubmit="return false;">
     <input type="hidden" name="action" value="ignore_container">
     <?php if(!Config::$ENABLE_APPDATA_BACKUP): ?>

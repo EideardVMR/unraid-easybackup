@@ -24,8 +24,34 @@ if($libvirt_running != 'yes') {
 $kvm = new KVM();
 $vms = $kvm->getVMs();
 
+$docker = new Docker();
+$container_list = $docker->getContainers();
+
+$chart_pi_vm = [];
+$chart_pi_container = [];
+
+foreach($vms as $vm) {
+    foreach($vm->getStoredBackups() as $backup) {
+        $chart_pi_vm[$vm->name] += $backup['Size'];
+    }
+}
+
+foreach($chart_pi_vm as &$pi) {
+    $pi = round( $pi / 1024 / 1024 / 1024, 2 );
+}
+
+foreach($container_list as $container) {
+    foreach($container->getStoredBackups() as $backup) {
+        $chart_pi_container[$container->name] += $backup['Size'];
+    }
+}
+
+foreach($chart_pi_container as &$pi) {
+    $pi = round( $pi / 1024 / 1024 / 1024, 2 );
+}
 ?>
 
+<script src="/plugins/easybackup/apexcharts/apexcharts.js"></script>
 
 <style>
     .wrapper {
@@ -74,6 +100,64 @@ $vms = $kvm->getVMs();
     }
 </style>
 
+<div style="display: flex; flex-wrap: wrap; justify-content:space-around; ">
+    <div style="width: 600px">
+        <div class="title">VM Backups in GB</div>
+        <div id="Chart_VM_Backup"></div>
+    </div>
+    <div style="width: 600px">
+        <div class="title">Container Backups in GB</div>
+        <div id="Chart_Container_Backup"></div>
+    </div>
+</div>
+
+<script>
+    var options = {
+        series: [<?php
+            echo implode(',', $chart_pi_vm);
+        ?>],
+        chart: {
+            width: 600,
+            type: 'pie',
+        },
+        labels: [<?php
+            $vm_names= [];
+            foreach($chart_pi_vm as $vm_name => $size) {
+                $vm_names[] = "'".$vm_name."'";
+            }
+            echo implode(',', $vm_names);
+        ?>],
+        legend: {
+            show: false
+        }
+    };
+
+    var chart = new ApexCharts(document.querySelector("#Chart_VM_Backup"), options);
+    chart.render();
+
+    options = {
+        series: [<?php
+            echo implode(',', $chart_pi_container);
+        ?>],
+        chart: {
+            width: 600,
+            type: 'pie',
+        },
+        labels: [<?php
+            $container_names= [];
+            foreach($chart_pi_container as $container_name => $size) {
+                $container_names[] = "'".$container_name."'";
+            }
+            echo implode(',', $container_names);
+        ?>],
+        legend: {
+            show: false
+        }
+    };
+
+    chart = new ApexCharts(document.querySelector("#Chart_Container_Backup"), options);
+    chart.render();
+</script>
 
 
 
