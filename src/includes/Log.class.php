@@ -36,6 +36,10 @@ class Log {
 
         $msg = date('Y-m-d H:i:s') . $type . $msg . "\r\n";
 
+        if(!file_exists(Config::$LOG_WRITE_PATH)) {
+            file_put_contents(Config::$LOG_WRITE_PATH, "--------------------------------\r\nEasyBackup\r\n--------------------------------\r\n", FILE_APPEND);
+        }
+
         if(!is_writable(Config::$LOG_WRITE_PATH)) {
             echo "Not writeable: " . Config::$LOG_WRITE_PATH;
             exit;
