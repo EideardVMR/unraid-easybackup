@@ -105,4 +105,75 @@ if(($argv[1] ?? '') == 'backup') {
     }
 
 }
+
+if(($argv[1] ?? '') == 'cleanup') {
+
+    $timeranges = CreateTimeranges();
+
+    if(($argv[2] ?? '') == 'all') {
+
+        Log::LogDebug('Starting Cleanup');
+
+        $kvm = new KVM();
+        $vms = $kvm->getVMs();
+
+        foreach($vms as $vm) {
+            Log::LogInfo('Cleanup VM: ' . $vm->name);
+
+            $backups = $vm->getStoredBackups();
+            $trs = $timeranges;
+            foreach($backups as $backup) {
+
+                $found = false;
+                foreach($trs as $key2 => $tr) {
+                    if($backup['TimestampUnix'] >= $tr['start'] && $backup['TimestampUnix'] <= $tr['end']) {
+                        unset($trs[$key2]);
+                        Log::LogDebug('Store Backup: ', $backup['FullPath']);
+                        $found = true;
+                        break;
+                    }
+
+                }
+
+                if(!$found) {
+                    Log::LogInfo('Clean Backup: ' . $backup['FullPath']);
+                    RemoveBackup($backup['FullPath']);
+                }
+
+            }
+
+        }
+
+        $docker = new Docker();
+        $containers = $docker->getContainers();
+        foreach($containers as $container) {
+            Log::LogInfo('Cleanup Container: ' . $container->name);
+
+            $backups = $container->getStoredBackups();
+            $trs = $timeranges;
+            foreach($backups as $backup) {
+
+                $found = false;
+                foreach($trs as $key2 => $tr) {
+                    if($backup['TimestampUnix'] >= $tr['start'] && $backup['TimestampUnix'] <= $tr['end']) {
+                        unset($trs[$key2]);
+                        Log::LogDebug('Store Backup: ', $backup['FullPath']);
+                        $found = true;
+                        break;
+                    }
+
+                }
+
+                if(!$found) {
+                    Log::LogInfo('Clean Backup: ' . $backup['FullPath']);
+                    RemoveBackup($backup['FullPath']);
+                }
+
+            }
+
+        }
+
+    }
+
+}
 ?>
