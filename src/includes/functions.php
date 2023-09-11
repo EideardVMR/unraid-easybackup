@@ -354,6 +354,100 @@ function GotifyPush($message, $title, $priority = 2){
     if ($result === FALSE) {  }
 }
 
+function getSamePath(string $path1, string $path2) {
+
+    $path1 = mb_str_split($path1);
+    $path2 = mb_str_split($path2);
+    
+    foreach($path1 as $key => $char) {
+        if($char == $path2[$key]) { continue; }
+        break;
+    }
+
+    $tmp = array_slice($path1, 0, $key);
+    return implode('', $tmp);
+}
+
+function RemoveBackup($full_path){
+
+    if(is_file($full_path)) {
+
+        if( Config::$ENABLE_RECYCLE_BIN ) {
+
+            if( !CheckFilesExists( Config::$RECYCLE_BIN_PATH ) ) {
+                
+                if( mkdir( Config::$RECYCLE_BIN_PATH ) ) {
+
+                    Log::LogError(sprintf(LANG_FAIL_CREATE_DIRECTORY, Config::$RECYCLE_BIN_PATH), __LINE__);
+                    return;
+
+                }
+
+            }
+
+            $same_path = getSamePath($full_path, Config::$RECYCLE_BIN_PATH);
+            $r_path = str_replace($same_path, '', $full_path);
+            if( substr($r_path, 0, 1) == '/'){
+                $r_path = substr($r_path, 1);
+            }
+
+            #PrintScreen(Config::$RECYCLE_BIN_PATH . $r_path);
+            $move_to = Config::$RECYCLE_BIN_PATH . $r_path;
+            $pi = pathinfo($move_to);
+
+            Log::LogInfo('Recycle: "' . $full_path . '" --> "' . $move_to . '"');
+
+            exec('mkdir -p -v "' . $pi['dirname'] . '"', $exec_out);
+            exec('mv "' . $full_path . '" "' . $move_to . '"', $exec_out);
+
+        } else {
+
+            Log::LogInfo('Remove: "' . $full_path . '');
+            exec('rm "' . $full_path . '"');
+
+        }
+
+    } else {
+
+        if( Config::$ENABLE_RECYCLE_BIN ) {
+
+            if( !CheckFilesExists( Config::$RECYCLE_BIN_PATH ) ) {
+                
+                if( mkdir( Config::$RECYCLE_BIN_PATH ) ) {
+
+                    Log::LogError(sprintf(LANG_FAIL_CREATE_DIRECTORY, Config::$RECYCLE_BIN_PATH), __LINE__);
+                    return;
+
+                }
+
+            }
+
+            $same_path = getSamePath($full_path, Config::$RECYCLE_BIN_PATH);
+            $r_path = str_replace($same_path, '', $full_path);
+            if( substr($r_path, 0, 1) == '/'){
+                $r_path = substr($r_path, 1);
+            }
+
+            #PrintScreen(Config::$RECYCLE_BIN_PATH . $r_path);
+            $move_to = Config::$RECYCLE_BIN_PATH . $r_path;
+            $pi = pathinfo($move_to);
+
+            Log::LogInfo('Recycle: "' . $full_path . '" --> "' . $move_to . '"');
+
+            exec('mkdir -p -v "' . $pi['dirname'] . '"', $exec_out);
+            exec('mv "' . $full_path . '" "' . $move_to . '"', $exec_out);
+
+        } else {
+
+            Log::LogInfo('Remove: "' . $full_path . '');
+            exec('rm -r "' . $full_path . '"');
+
+        }
+
+    }
+
+}
+
 /**
  * RemoveFile
  * Löscht eine Datei bzw. verschiebt diese in den Papierkorb.
