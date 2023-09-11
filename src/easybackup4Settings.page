@@ -229,7 +229,7 @@ Icon="clone"
                 data-pickfolders="true"
                 data-pickfilter="NO_FILES_FILTER"
                 pattern="^\/mnt\/(([\w.-]+)( [\w.-]+)*)*(\/(([\w.-]+)( [\w.-]+)*)*)*$"
-                value="<?=Config::$APPDATA_BACKUP_PATH?>" 
+                value="<?=Config::$RECYCLE_BIN_PATH?>" 
                 placeholder="Select a backup location" 
                 style="display: inline-block;">
             <div class="textarea fileTree"></div>
