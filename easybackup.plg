@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "easybackup">
 <!ENTITY author "Sascha Michel">
-<!ENTITY version "2023.09.02">
-<!ENTITY md5 "173d15417dbd97bd24e7a736e21351a6">
+<!ENTITY version "2023.09.11">
+<!ENTITY md5 "e49157a55d15139e2cf2cf2a371cb58f">
 <!ENTITY launch "Settings/easybackup">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github "EideardVMR/unraid-easybackup">
