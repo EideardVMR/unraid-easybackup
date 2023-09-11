@@ -11,6 +11,10 @@
 ]>
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.3.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <CHANGES>
+###2023.09.11
+- Adding Dashboard Items
+- Adding Cleanup old Backups
+- Fixing some Bugs
 ###2023.09.02
 - Initial Release - BETA
     </CHANGES>
