@@ -9,7 +9,7 @@
 <!ENTITY github "EideardVMR/unraid-easybackup">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&github;/main/&name;.plg">
 ]>
-<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.3.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
+<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <SUPPORT></SUPPORT>
     <CHANGES>
 ###2023.09.12
