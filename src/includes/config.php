@@ -65,7 +65,7 @@ class Config {
 
     #region Logging
     public static $LOG_WRITE = true;
-    public static $LOG_WRITE_PATH = '/boot/config/easybackup/worker.log';
+    public static $LOG_WRITE_PATH = '/boot/config/easybackup/easybackup.log';
     public static $LOG_MAX_SIZE = 100 * 1024 * 1024;
     /**
      * 0 = Debug
@@ -73,7 +73,7 @@ class Config {
      * 2 = Warnings (empfohlen)
      * 3 = Errors
      */
-    public static $LOG_LEVEL = 0;
+    public static $LOG_LEVEL = 2;
     #endregion
 
     #region Others
