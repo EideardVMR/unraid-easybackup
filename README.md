@@ -1,4 +1,4 @@
-# unraid-smbackup
+# unraid-easybackup
 This Unraid plugin is designed to help you easily make backups of your VMs and Docker containers.
 
 ## What is currently implemented
@@ -40,7 +40,7 @@ In the picture you can see that the VM "Ubuntu" has a snapshot.
 
 ![image](https://github.com/EideardVMR/unraid-easybackup/assets/143615696/1878ae2f-8d81-4c13-8e5f-be309642252b)
 
-> **Information**
+> **Note**
 > - Snapshots can only be created from VMs that have been started.
 > - Commits can only be executed by VMs that have been started.
 > - Restores can only be executed with stopped VMs.
