@@ -3,13 +3,14 @@
 <!ENTITY name "easybackup">
 <!ENTITY author "Sascha Michel">
 <!ENTITY version "2023.09.12">
-<!ENTITY md5 "3edf668cb785a2a313ee8e860818e861">
+<!ENTITY md5 "426b7ffeacb65515cf7d08826468dc0a">
 <!ENTITY launch "Settings/easybackup">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github "EideardVMR/unraid-easybackup">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&github;/main/&name;.plg">
 ]>
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.3.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
+    <SUPPORT></SUPPORT>
     <CHANGES>
 ###2023.09.11
 - Adding Dashboard Items
@@ -47,6 +48,7 @@ echo ""
     -->
     <FILE Run="/bin/bash" Method="remove">
         <INLINE>
+rm -f $(ls /boot/config/plugins/&name;/&name;*.txz 2&gt;/dev/null | grep -v '&version;')
 removepkg &name;-&version;
         </INLINE>
     </FILE>
