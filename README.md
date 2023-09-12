@@ -62,13 +62,15 @@ An example: You have a Plex server as container. This has 3 binds. One stores th
 ### VMs and Container
 Activate the automatic backup of VMs or containers here. This function currently only ensures that the VMs and containers that are not to be ignored are backed up using the "backup all" job. In addition, you specify a path where the backups are saved. I recommend to create a share (for example: backup_internal) in which you create a folder named "domains" and "appdata".
 
-You can leave the snapshot extension as it is. If you want a special extension you can change it here. But be careful: NEVER change the extension if you have backups that contain a snapshot or if snapshots of VMs currently exist! This will cause Easybackup not to recognize the snapshot anymore.
+> **Warning**
+> You can leave the snapshot extension as it is. If you want a special extension you can change it here. But be careful: NEVER change the extension if you have backups that contain a snapshot or if snapshots of VMs currently exist! This will cause Easybackup not to recognize the snapshot anymore.
 
 ### Compression
 When compressing, you can choose between Zip and GZ. With GZ, a tar archive is packed using gZip. Mostly the GZip compression is faster, but it has the disadvantage that you cannot extract single files from the backup without unpacking the whole file.
 Therefore Zip is selected as default.
 
-If you are worried about the file permissions not being preserved with Zip, I can reassure you. In the Zip file (also with GZ or uncompressed) a "fileinfo.json" is always stored. This contains all the information about the ownership permissions of the files. The automatic restore should use this file in the future to restore all permissions.
+> **Note**
+> If you are worried about the file permissions not being preserved with Zip, I can reassure you. In the Zip file (also with GZ or uncompressed) a "fileinfo.json" is always stored. This contains all the information about the ownership permissions of the files. The automatic restore should use this file in the future to restore all permissions.
 
 ### Backups
 Unlike many other backup systems for Unraid, Easybackup can take into account different time periods. For example, you can keep one backup of each of the last 7 days (daily), then one of each of the last 4 weeks, and so on. 
