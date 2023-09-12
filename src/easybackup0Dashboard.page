@@ -106,7 +106,9 @@ foreach($chart_pi_container as &$pi) {
     }
 </style>
 
-
+<div style="background-color: #fff6bf; border: 1px solid #ffd324; padding: 10px; margin-bottom: 30px;">
+    <?=_(LANG_GUI_BETA_INFORMATIONS)?>
+</div>
 
 <div style="display: flex; flex-wrap: wrap; justify-content:space-around; ">
     <div style="width: 600px">

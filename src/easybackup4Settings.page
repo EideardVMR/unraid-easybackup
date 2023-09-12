@@ -20,6 +20,10 @@ Icon="clone"
 }
 </style>
 
+<div style="background-color: #fff6bf; border: 1px solid #ffd324; padding: 10px; margin-bottom: 30px;">
+    <?=_(LANG_GUI_BETA_INFORMATIONS)?>
+</div>
+
 <link type="text/css" rel="stylesheet" href="/webGui/styles/jquery.filetree.css?v=1676050400">
 <link type="text/css" rel="stylesheet" href="/webGui/styles/jquery.switchbutton.css?v=1548293345">
 <script type="text/javascript" src="/webGui/javascript/jquery.filetree.js?v=1638550562"></script>

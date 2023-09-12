@@ -20,6 +20,27 @@ define('LANG_GUI_SECURITYNOTE_SNAPSHOT', '
     </p>
 ');
 
+define('LANG_GUI_BETA_INFORMATIONS', '
+<p style="font-weight: bold;">This plugin is still a beta.</p>
+    <ul>
+        <li>Please report bugs in the support forum (link in CA or under plugins) or at <a href="https://github.com/EideardVMR/unraid-easybackup">Github</a>.</li>
+        <li>For security reasons, the plugin never starts a backup automatically. You have to set up an automatic backup manually. (Cronjob or UserScripts).</li>
+        <li>For automatic cleanup of backups you also have to create a cronjob or a script.</li>
+    </ul>
+</p>
+<code>
+<p style="margin: 0px; font-weight: bold;">Example for Crontab:</p>
+    <p style="margin: 0px; margin-left: 20px;">0 1 * * * root php /usr/local/emhttp/plugins/easybackup/job.php cleanup all</p>
+    <p style="margin: 0px; margin-left: 20px;">0 0 * * * root php /usr/local/emhttp/plugins/easybackup/job.php backup all</p>
+    
+<p style="margin: 0px; font-weight: bold;">Example for UserScripts:</p>
+    <p style="margin: 0px; margin-left: 20px;">#!/bin/bash</p>
+    <p style="margin: 0px; margin-left: 20px;">php /usr/local/emhttp/plugins/easybackup/job.php cleanup all</p>
+    <p style="margin: 0px; margin-left: 20px;">php /usr/local/emhttp/plugins/easybackup/job.php backup all</p>
+</code>
+');
+
+
 define('LANG_GUI_SECURITYNOTE_VMBACKUPDISABLED','VM BACKUP IS DISABLED');
 
 // Überschriften
