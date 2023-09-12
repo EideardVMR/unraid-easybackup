@@ -3,7 +3,7 @@
 <!ENTITY name "easybackup">
 <!ENTITY author "Sascha Michel">
 <!ENTITY version "2023.09.12">
-<!ENTITY md5 "be523d911b5f8b6359544c5cdd4592bd">
+<!ENTITY md5 "24a972916c241d2a6f35d49122b48b89">
 <!ENTITY launch "Settings/easybackup">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github "EideardVMR/unraid-easybackup">
@@ -50,8 +50,9 @@ echo ""
     -->
     <FILE Run="/bin/bash" Method="remove">
         <INLINE>
-rm -r /boot/config/plugins/&name;
 removepkg &name;-&version;
+rm -r /boot/config/plugins/&name;
+rm -r &plugdir;
         </INLINE>
     </FILE>
 </PLUGIN>
