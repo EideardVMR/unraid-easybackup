@@ -12,6 +12,8 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <SUPPORT>https://forums.unraid.net/topic/145044-plugin-easybackup/</SUPPORT>
     <CHANGES>
+###2023.09.
+- Fix: Show Last Backup Timestamp
 ###2023.09.12
 - Fix installing Bugs for Beta release
 ###2023.09.11

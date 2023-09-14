@@ -29,7 +29,7 @@ Icon="clone"
                     $last_backup = 'never';
 
                     if(count($backups)>0) {
-                        $backups[array_key_last($backups)]['Timestamp'];
+                        $last_backup = $backups[0]['Timestamp'];
                     }
 
                     foreach($backups as $backup) {
