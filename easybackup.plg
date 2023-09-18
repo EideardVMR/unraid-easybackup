@@ -12,7 +12,8 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <SUPPORT>https://forums.unraid.net/topic/145044-plugin-easybackup/</SUPPORT>
     <CHANGES>
-###2023.09.
+###2023.09.18
+- Fix: Uninstaller removes now all Files.
 - Fix: Show Last Backup Timestamp
 ###2023.09.12
 - Fix installing Bugs for Beta release
@@ -52,9 +53,18 @@ echo ""
     -->
     <FILE Run="/bin/bash" Method="remove">
         <INLINE>
+
 removepkg &name;-&version;
-rm -r /boot/config/plugins/&name;
-rm -r &plugdir;
+
+rm -rf /boot/config/plugins/&name;
+rm -rf &plugdir;
+
+echo ""
+echo "-----------------------------------------------------------"
+echo " &name; has been removed."
+echo " Version: &version;"
+echo "-----------------------------------------------------------"
+echo ""
         </INLINE>
     </FILE>
 </PLUGIN>
