@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "easybackup">
 <!ENTITY author "Sascha Michel">
-<!ENTITY version "2023.09.12">
-<!ENTITY md5 "24a972916c241d2a6f35d49122b48b89">
+<!ENTITY version "2023.10.10">
+<!ENTITY md5 "cc51a379b05c55289c83dfaa8b4d4ea7">
 <!ENTITY launch "Settings/easybackup">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github "EideardVMR/unraid-easybackup">
@@ -12,6 +12,8 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <SUPPORT>https://forums.unraid.net/topic/145044-plugin-easybackup/</SUPPORT>
     <CHANGES>
+###2023.10.10
+- Fix: Warning "scandir([...]) Failed to open directory:[...]"
 ###2023.09.18
 - Fix: Uninstaller removes now all Files.
 - Fix: Show Last Backup Timestamp
