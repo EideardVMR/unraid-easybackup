@@ -15,8 +15,14 @@ This Unraid plugin is designed to help you easily make backups of your VMs and D
 - Copy the last backup to a removable disk. 
 - Enable automatic backups (currently this must be set up manually for security reasons).
 
+## Planned changes
+- Currently the plugin works only when Docker and VM service is started. This will soon also be possible separately.
+- Improvement of the loading speed
+- In some designs the plugin does not look good, or font is not readable (white on white).
+
 ## Known issues
 - Backup summary via Unraid notifications counts the backed up files incorrectly!
+- **??? I received a message that the settings page is empty. But I have not received any further feedback. In this case, please contact me. ???**
 
 ## Set up automatic backup
 For security reasons, the automatic backup is not set up by the plugin - you have to do this yourself!
