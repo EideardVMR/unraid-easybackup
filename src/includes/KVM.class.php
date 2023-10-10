@@ -534,7 +534,10 @@ class VM {
         }
 
         $output = [];
-        $files = scandir(Config::$VM_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR);
+        $files = [];
+        if(file_exists(Config::$VM_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR)) {
+            $files = scandir(Config::$VM_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR);
+        }
         foreach($files as $file) {
             if($file == '.' || $file == '..') { continue; }
 
@@ -614,7 +617,7 @@ class VM {
 
         // Backuppfad bestimmen
         $target_path = Config::$VM_BACKUP_PATH . $this->name . '/' . date('Y-m-d_H.i');
-        Log::LogInfo('VM: Create Backuppath: ' . $target_path);
+        Log::LogInfo('VM: determine Backuppath: ' . $target_path);
 
         // Dateien zum Backup ermitteln
         $copy_files = [];

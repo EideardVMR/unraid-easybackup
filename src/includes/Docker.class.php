@@ -111,7 +111,10 @@ class Container {
         }
 
         $output = [];
-        $files = scandir(Config::$APPDATA_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR);
+        $files = [];
+        if(file_exists(Config::$APPDATA_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR)) {
+            $files = scandir(Config::$APPDATA_BACKUP_PATH . $this->name . DIRECTORY_SEPARATOR);
+        }
         foreach($files as $file) {
             if($file == '.' || $file == '..') { continue; }
 
@@ -241,6 +244,7 @@ class Container {
         // Dateiendung und tieferliegende Verzeichnisse werden in der Kompressionmethode angehangen!
         // Daher kein / am ende des Pfades.
         $target_path = Config::$APPDATA_BACKUP_PATH . $this->name . '/' . date('Y-m-d_H.i');
+        Log::LogInfo('VM: determine Backuppath: ' . $target_path);
 
         $backupstate = false;
         if(Config::$COMPRESS_BACKUP) {
