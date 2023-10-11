@@ -51,6 +51,10 @@ Icon="clone"
                 <span 
                     style="color: red; display: none;" 
                     id="view1_text_runningtime_<?=$vm->uuid?>">[time]</span>
+                
+                
+                <p><?=($vm->checkGuestAgent() ? '' : 'NO GUEST AGENT!')?></p>
+                
             </td>
             <td style="text-align: right;">
                 <button 

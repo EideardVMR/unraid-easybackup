@@ -76,6 +76,9 @@ $timeranges = CreateTimeranges();
                     <span 
                         style="color: red; display: none;" 
                         id="view2_text_runningtime_<?=$vm->uuid?>">[time]</span>
+                    
+                    <p><?=($vm->checkGuestAgent() ? '' : 'NO GUEST AGENT!')?></p>
+                    
                 </td>
                 <td><?=$last_backup?></td>
                 <td><?=count($backups)?></td>
