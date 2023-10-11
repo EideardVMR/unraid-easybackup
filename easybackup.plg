@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "easybackup">
 <!ENTITY author "Sascha Michel">
-<!ENTITY version "2023.10.11a">
-<!ENTITY md5 "f2a02b7b392873ad1a2b76a3ac1d38ac">
+<!ENTITY version "2023.10.11b">
+<!ENTITY md5 "6a6f75e230262d70a223551f9f51a81f">
 <!ENTITY launch "Settings/easybackup">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github "EideardVMR/unraid-easybackup">
@@ -12,6 +12,8 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <SUPPORT>https://forums.unraid.net/topic/145044-plugin-easybackup/</SUPPORT>
     <CHANGES>
+###2023.10.11b
+- Fix: Create snapshot reports error although everything is correct
 ###2023.10.11
 - Fix: Snapshot failed without reason
 - Add: Download Log Button in Settings Tab
