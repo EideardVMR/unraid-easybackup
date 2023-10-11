@@ -67,6 +67,8 @@ define('LANG_GUI_BTN_CREATE_SNAP', 'Create Snapshot');
 define('LANG_GUI_BTN_REVERT_SNAP', 'Revert');
 define('LANG_GUI_BTN_COMMIT_SNAP', 'Commit to %s');
 define('LANG_GUI_BTN_SAVE', 'Save');
+define('LANG_GUI_BTN_LOG_DOWNLOAD', 'Download');
+define('LANG_GUI_BTN_LOG_CLEAR', 'Clear');
 define('LANG_GUI_BTN_CANCLE', 'Cancle');
 define('LANG_GUI_BTN_START', 'Start');
 define('LANG_GUI_BTN_STOP', 'Stop');

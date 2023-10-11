@@ -368,6 +368,15 @@ Icon="clone"
             created which can strongly affect the performance!
         </p>
     </blockquote>
+
+    <dl>
+        <dt>Action:</dt>
+        <dd>
+            <button onClick="download_log()"><?=_(LANG_GUI_BTN_LOG_DOWNLOAD)?></button>
+            <button onClick="clear_log()"><?=_(LANG_GUI_BTN_LOG_CLEAR)?></button>
+            <?= number_format(filesize('/boot/config/plugins/easybackup/easybackup.log') / 1024 / 1024, 2) ?> MB
+        </dd>
+    </dl>
 </form>
 
 <div style="display: flex;">
@@ -381,7 +390,6 @@ Icon="clone"
 </div>
 
 <script>
-
     $('#GOTIFY_ENABLED').on('change', function(e) {
         if($('#GOTIFY_ENABLED > option:selected').val() == 'true') {
             $('#block_gotify').show();
@@ -404,6 +412,20 @@ Icon="clone"
             }
             loading_view3(false);
         });
+    };
+
+    function clear_log() {
+        loading_view3(true);
+        $.post('/plugins/easybackup/actions.php', {action: 'clear_log'}, (data) => {
+            if(data == 'OK') {
+                location.reload();
+            }
+            loading_view3(false);
+        });
+    };
+
+    function download_log() {
+        window.open('http://<?=$_SERVER["SERVER_ADDR"]?>/plugins/easybackup/download_log.php', 'download');
     };
 
     $('#GOTIFY_ENABLED').change();

@@ -217,6 +217,14 @@ if($_POST['action'] == 'create_snap') {
 
     echo "OK";
     exit;
+} else if($_POST['action'] == 'clear_log'){
+    
+    if(file_exists('/boot/config/plugins/easybackup/easybackup.log')) {
+        unlink('/boot/config/plugins/easybackup/easybackup.log');
+    }
+
+    echo "OK";
+    exit;
 }
 
 
