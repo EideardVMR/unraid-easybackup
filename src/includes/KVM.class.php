@@ -48,6 +48,8 @@ class VM {
     public string|null $error = null;
     public int|null $lastSnapshotNumber = null;
 
+    private $guestAgent = null;
+
     public $backup_compressioninfo = [];
 
     private $stored_backups = null;
@@ -106,8 +108,10 @@ class VM {
         $xml = @new SimpleXMLElement($this->getXML(true));
         $disks = $xml->devices->disk;
         for($i = 0; $i < $disks->count(); $i++) {
+            if($disks[$i]->attributes()['device'] != 'disk') { continue; }
             $path = $disks[$i]->source->attributes()['file'];
             $target = $disks[$i]->target->attributes()['dev'];
+
 
             $dsk = [
                 'Target' => (string)$target,
@@ -176,6 +180,20 @@ class VM {
         
     }
 
+    public function checkGuestAgent(){
+        LOG::LogDebug('VM: Check guestagent');
+        if($this->guestAgent === null) {
+            $cmd = 'virsh qemu-agent-command "' . $this->name . '" \'{"execute": "guest-info", "arguments": {}}\'';
+            exec($cmd, $exec_out);
+            if(strlen($exec_out[0]) < 5) {
+                $this->guestAgent = false;
+            }
+            $this->guestAgent = true;
+        }
+
+        return $this->guestAgent;
+    }
+
     /**
      * createSnapshot
      * Erzeugt einen Snapshot aller vDisks
@@ -220,6 +238,12 @@ class VM {
 
         }
 
+        // Prüfen ob GuestAgent installiert ist
+        if(!$this->checkGuestAgent()){
+            LOG::LogError('VM: Guest agent is not responding on "' . $this->name . '".');
+            $this->error = "Guest agent is not responding";
+        }
+
         // Prüfen ob Snapshot-Dateien bereits existieren
         foreach($this->disks as $disk) {
 
@@ -250,7 +274,7 @@ class VM {
         $cmd = 'virsh snapshot-create-as --domain "' . $this->name . '" --name "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" --disk-only --quiesce --no-metadata';
         exec($cmd, $exec_out);
         LOG::LogDebug("VM: Create Snapshot: " . $cmd);
-        if($exec_out[0] == 'Domain snapshot ' . Config::$SNAPSHOT_EXTENSION . $snapnumber . ' created') {
+        if(array_search('Domain snapshot ' . Config::$SNAPSHOT_EXTENSION . $snapnumber . ' created', $exec_out)) {
             
             LOG::LogInfo('VM: Snapshot "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" created');
             $this->hasSnapshot = true;
@@ -635,6 +659,11 @@ class VM {
             Log::LogDebug('VM: After Backup commit to ' . $snapshot_commit);
 
             if(!$this->createSnapshot()){
+                if($notify) {
+                    sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, $this->error), 'warning');
+                }
+                
+                Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
                 return false;
             }
             // Schlafen, damit alle Informationen stimmen.
@@ -740,7 +769,7 @@ class VM {
         
                 // Nachricht senden
                 if($notify) {
-                    sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, LANG_NOTIFY_SNAPSHOT_COMMIT_FAILED));
+                    sendNotification(sprintf(LANG_NOTIFY_FAILED_BACKUP_VM, $this->name, LANG_NOTIFY_SNAPSHOT_COMMIT_FAILED), 'warning');
                 }
                 
                 Jobs::remove(JobCategory::VM, 'backup', $this->uuid);
