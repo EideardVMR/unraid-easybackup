@@ -274,7 +274,7 @@ class VM {
         $cmd = 'virsh snapshot-create-as --domain "' . $this->name . '" --name "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" --disk-only --quiesce --no-metadata';
         exec($cmd, $exec_out);
         LOG::LogDebug("VM: Create Snapshot: " . $cmd);
-        if(array_search('Domain snapshot ' . Config::$SNAPSHOT_EXTENSION . $snapnumber . ' created', $exec_out)) {
+        if(array_search('Domain snapshot ' . Config::$SNAPSHOT_EXTENSION . $snapnumber . ' created', $exec_out) !== false) {
             
             LOG::LogInfo('VM: Snapshot "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" created');
             $this->hasSnapshot = true;
