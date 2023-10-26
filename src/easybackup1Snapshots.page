@@ -4,7 +4,7 @@ Icon="clone"
 ---
 
 
-<div style="background-color: #fff6bf; border: 1px solid #ffd324; color: #000; padding: 10px; margin-bottom: 30px;">
+<div style="background-color: #fff6bf; border: 1px solid #ffd324; padding: 10px; margin-bottom: 30px;">
     <?=_(LANG_GUI_SECURITYNOTE_SNAPSHOT)?>
 </div>
 
