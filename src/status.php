@@ -16,6 +16,7 @@ foreach($vms as $vm) {
     $tmp['id'] = $vm->uuid;
     $tmp['name'] = $vm->name;
     $tmp['state'] = $vm->state->value;
+    $tmp['guestagent'] = $vm->checkGuestAgent(); 
 
     $tmp['job_type'] = null;
     $tmp['job_unixtime'] = null;
