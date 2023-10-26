@@ -773,6 +773,40 @@ function convertSize($size, $multi = 1024, $round=2, $unit=array('B','kB','MB','
     return round($size/pow($multi,($i=floor(log($size,$multi)))),$round).' '.$unit[$i];
 }
 
+function cmdExec($command, &$msg, &$error){
+    $descriptorspec = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w']
+    ];
+
+    Log::LogDebug('Start Command: ' . $command);
+    $proc = proc_open($command, $descriptorspec, $pipes);
+    
+    while(true) {
+        $proc_details = proc_get_status($proc);
+        if($proc_details['running'] !== 1) { break; }
+    }
+    
+    $msg = '';
+    while($tmp = fread($pipes[1], 10)) {
+        $msg .= $tmp;
+    }
+    
+    $error = '';
+    while($tmp = fread($pipes[2], 10)) {
+        $error .= $tmp;
+    }
+
+    if(mb_strlen($msg) > 0) {
+        Log::LogDebug("Exec Reported Message: \r\n" . $msg);
+    }
+    if(mb_strlen($error) > 0) {
+        Log::LogDebug("Exec Reported Error: " . $error);
+    }
+
+}
+
 /*
 function jobAdd($type, $job_type , $uuid) {
     $jobs = [];

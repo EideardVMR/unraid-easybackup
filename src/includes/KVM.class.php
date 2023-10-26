@@ -82,15 +82,16 @@ class VM {
     public function getXML(bool $force_reload = false) : string|bool {
         
         if($this->xml === null || $force_reload) {
+            Log::LogDebug('VM: Load XML');
             $cmd = 'virsh dumpxml "' . $this->name . '"';
-            Log::LogDebug('VM: Load XML: ' . $cmd);
-            exec($cmd, $xml);
-            if($xml === "error: failed to get domain '{$this->name}'") {
-                Log::LogError('VM: Loading XML Failed:');
-                Log::LogError(print_r($xml, true));
+            cmdExec($cmd, $xml, $error);
+            if(mb_strlen($error) > 0) {
+                $this->error = $error;
+                Log::LogError('VM: Loading XML failed');
+                Log::LogError($error);
                 return false;
             }
-            $this->xml = implode("\r\n",$xml);
+            $this->xml = $xml;
         }
 
         return $this->xml;
@@ -140,11 +141,16 @@ class VM {
      */
     public function loadInfo() {
 
+        Log::LogDebug('VM: Load VM Informations');
         $cmd = 'virsh dominfo "' . $this->name . '"';
-        Log::LogDebug('VM: Load VM Informations: ' . $cmd);
-        exec($cmd, $output);
-        Log::LogDebug(print_r($output, true));
-
+        cmdExec($cmd, $output, $error);
+        if(mb_strlen($error) > 0) {
+            $this->error = $error;
+            Log::LogError('VM: Loading VM informations failed');
+            Log::LogError($error);
+            return false;
+        }
+        $output = explode("\n", $output);
         foreach($output as $key => $o) {
             $ex = explode(':', $o, 2);
             if(count($ex) == 2) {
@@ -184,9 +190,12 @@ class VM {
         LOG::LogDebug('VM: Check guestagent');
         if($this->guestAgent === null) {
             $cmd = 'virsh qemu-agent-command "' . $this->name . '" \'{"execute": "guest-info", "arguments": {}}\'';
-            exec($cmd, $exec_out);
-            if(strlen($exec_out[0]) < 5) {
-                $this->guestAgent = false;
+            cmdExec($cmd, $exec_out, $error);
+            if(mb_strlen($error) > 0) {
+                $this->error = $error;
+                Log::LogInfo('VM: guestagent not found');
+                Log::LogInfo($error);
+                return false;
             }
             $this->guestAgent = true;
         }
@@ -272,9 +281,15 @@ class VM {
         
         // Snapshot erzeugen
         $cmd = 'virsh snapshot-create-as --domain "' . $this->name . '" --name "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" --disk-only --quiesce --no-metadata';
-        exec($cmd, $exec_out);
+        cmdExec($cmd, $exec_out, $error);
+        if(mb_strlen($error) > 0) {
+            $this->error = $error;
+            Log::LogError('VM: Create Snapshot "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" failed');
+            Log::LogError($error);
+            return false;
+        }
         LOG::LogDebug("VM: Create Snapshot: " . $cmd);
-        if(array_search('Domain snapshot ' . Config::$SNAPSHOT_EXTENSION . $snapnumber . ' created', $exec_out) !== false) {
+        if('Domain snapshot ' . Config::$SNAPSHOT_EXTENSION . $snapnumber . " created\n" == $exec_out) {
             
             LOG::LogInfo('VM: Snapshot "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" created');
             $this->hasSnapshot = true;
@@ -296,11 +311,9 @@ class VM {
 
         }
 
-        Log::LogError('VM: Create Snapshot "' . Config::$SNAPSHOT_EXTENSION . $snapnumber . '" failed');
-        Log::LogError(print_r($exec_out, true));
-        $this->error = "Faild to create Snapshot: " . $exec_out[0];
+        $this->error = $exec_out;
+        Log::LogError('VM: Unknown Error: ' . $exec_out);
         return false;
-
     }
     
     /**
@@ -360,16 +373,21 @@ class VM {
             $command[] = '--delete';
 
             Log::LogDebug('VM: Commit Snapshot: ' . join(' ', $command));
-            exec(join(' ', $command), $output);
-            if($output[1] != 'Successfully pivoted') {
-                Log::LogWarning('VM: Commit failed');
-                Log::LogWarning(print_r($output, true));
+            cmdExec(join(' ', $command), $output, $error);
+            if(mb_strlen($error) > 0) {
                 $errors[] = 'Commit ' . $target . ' failed';
+                Log::LogError('VM: commit failed');
+                Log::LogError($error);
             }
         }
 
         if(count($errors) > 0) {
             $this->error = join('<br>', $errors);
+            return false;
+        }
+
+        if($output != "\nSuccessfully pivoted\n") {
+            $this->error = 'Unknown Error: ' . $output;
             return false;
         }
 
@@ -459,10 +477,11 @@ class VM {
 
         $cmd = 'virsh define "' . $xml_file . '"';
         Log::LogDebug('VM: Start to revert snapshot of "' . $this->name . '" to ' . $to);
-        exec($cmd, $output);
-        if($output[0] != 'Domain \'' . $this->name . '\' defined from ' . $xml_file . '') {
-            Log::LogWarning('VM: Could not define new XML');
-            Log::LogWarning(print_r($output, true));
+        cmdExec($cmd, $output, $error);
+        if(mb_strlen($error) > 0) {
+            $this->error = $error;
+            Log::LogError('VM: revert failed');
+            Log::LogError($error);
             return false;
         }
 
@@ -501,11 +520,11 @@ class VM {
 
         $cmd = 'virsh start "' . $this->name . '"';
         Log::LogInfo('VM: Start VM: ' . $cmd);
-        exec($cmd, $output);
-        if($output[0] != "Domain '" . $this->name . "' started") {
-            Log::LogWarning('VM: Start VM failed');
-            Log::LogWarning(print_r($output, true));
-            $this->error = $output[0];
+        cmdExec($cmd, $output, $error);
+        if(mb_strlen($error) > 0) {
+            $this->error = $error;
+            Log::LogError('VM: Start VM failed');
+            Log::LogError($error);
             return false;
         }
 
@@ -533,11 +552,11 @@ class VM {
 
         $cmd = 'virsh shutdown "' . $this->name . '"';
         Log::LogInfo('VM: Shutdown VM: ' . $cmd);
-        exec($cmd, $output);
-        if($output[0] != "Domain '" . $this->name . "' is being shutdown") {
-            Log::LogWarning('VM: Shutdown VM failed');
-            Log::LogWarning(print_r($output, true));
-            $this->error = $output[0];
+        cmdExec($cmd, $output, $error);
+        if(mb_strlen($error) > 0) {
+            $this->error = $error;
+            Log::LogError('VM: Shutdown VM failed');
+            Log::LogError($error);
             return false;
         }
 
@@ -946,8 +965,14 @@ class VM {
 
         Log::LogDebug('Start Backup: ' . $command);
 
-        $starttime = time();
-        exec($command, $exec_output);
+        $starttime = time();        
+        cmdExec($command, $exec_output, $error);
+        if(mb_strlen($error) > 0) {
+            $this->error = $error;
+            Log::LogError('VM: Compression failed');
+            Log::LogError($error);
+            return false;
+        }
 
         unlink($pi['dirname'] . '/mounts.json');
         unlink($pi['dirname'] . '/fileinfo.json');
@@ -1014,9 +1039,15 @@ class KVM {
         if($this->vms === null || $force_reload) {
             $this->vms = [];
 
-            $virsh_list_lines = [];
+            $virsh_list_lines = '';
 
-            exec("virsh list --all", $virsh_list_lines);
+            cmdExec("virsh list --all", $virsh_list_lines, $error);
+            if(mb_strlen($error) > 0) {
+                Log::LogError('VM: Start VM failed');
+                Log::LogError($error);
+                return false;
+            }
+            $virsh_list_lines = explode("\n", $virsh_list_lines);
 
             unset($virsh_list_lines[0]);
             unset($virsh_list_lines[1]);
