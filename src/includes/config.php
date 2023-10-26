@@ -66,7 +66,7 @@ class Config {
     #region Logging
     public static $LOG_WRITE = true;
     public static $LOG_WRITE_PATH = '/boot/config/plugins/easybackup/easybackup.log';
-    public static $LOG_MAX_SIZE = 100 * 1024 * 1024;
+    public static $LOG_MAX_SIZE = 10 * 1024 * 1024;
     /**
      * 0 = Debug
      * 1 = Info
