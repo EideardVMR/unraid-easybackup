@@ -45,6 +45,11 @@ class Log {
             exit;
         }
         file_put_contents(Config::$LOG_WRITE_PATH, $msg, FILE_APPEND);
+
+        $fs = filesize(Config::$LOG_WRITE_PATH);
+        if($fs > Config::$LOG_MAX_SIZE) {
+            cmdExec('tar cfz boot/config/plugins/easybackup/old_logs.tar.gz boot/config/plugins/easybackup/easybackup.log', $exec_out, $error);
+        }
     }
 
 }

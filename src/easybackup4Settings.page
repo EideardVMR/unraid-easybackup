@@ -370,6 +370,19 @@ Icon="clone"
     </blockquote>
 
     <dl>
+        <dt style="cursor: help" onclick="help('help20')">Loglevel:</dt>
+        <dd>
+            <input type="number" name="LOG_MAX_SIZE" value="<?=Config::$LOG_MAX_SIZE?>"> B
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help20">
+        <p>You can set the maximum log size.</p>
+        <p>If the file exceeds the specified size, the current log file of a file old_log.tar.gz is packed and a new file is started. If another log file exceeds the specified size, the compressed file is overwritten. </p>
+        <p>You can find the file under /boot/config/plugins/easybackup/</p>
+        <p>If you have installed Easybackup up to version 2023.10.11b, this size is set to 100MB. Otherwise it is 10MB</p>
+    </blockquote>
+
+    <dl>
         <dt>Action:</dt>
         <dd>
             <button onClick="download_log()"><?=_(LANG_GUI_BTN_LOG_DOWNLOAD)?></button>
