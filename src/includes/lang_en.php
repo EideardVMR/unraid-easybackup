@@ -23,7 +23,7 @@ define('LANG_GUI_SECURITYNOTE_SNAPSHOT', '
 define('LANG_GUI_BETA_INFORMATIONS', '
 <p style="font-weight: bold;">This plugin is still a beta.</p>
     <ul>
-        <li>Please report bugs in the support forum (link in CA or under plugins) or at <a href="https://github.com/EideardVMR/unraid-easybackup">Github</a>.</li>
+        <li>Please report bugs at <a href="https://github.com/EideardVMR/unraid-easybackup">Github</a>.</li>
         <li>For security reasons, the plugin never starts a backup automatically. You have to set up an automatic backup manually. (Cronjob or UserScripts).</li>
         <li>For automatic cleanup of backups you also have to create a cronjob or a script.</li>
     </ul>
