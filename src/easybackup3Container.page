@@ -7,7 +7,7 @@ Icon="clone"
     <input type="hidden" name="action" value="ignore_container">
     <?php if(!Config::$ENABLE_APPDATA_BACKUP): ?>
 
-        <div class='notice shift'><?=_(LANG_GUI_SECURITYNOTE_VMBACKUPDISABLED)?></div>
+        <div class='notice shift'><?=_(LANG_GUI_SECURITYNOTE_APPDATABACKUPDISABLED)?></div>
 
     <?php endif; ?>
     <table class="disk_status wide">
