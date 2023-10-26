@@ -3,7 +3,6 @@ Title="Snapshot Manager"
 Icon="clone"
 ---
 
-
 <div style="background-color: #fff6bf; border: 1px solid #ffd324; color: #000; padding: 10px; margin-bottom: 30px;">
     <?=_(LANG_GUI_SECURITYNOTE_SNAPSHOT)?>
 </div>
@@ -52,15 +51,13 @@ Icon="clone"
                     style="color: red; display: none;" 
                     id="view1_text_runningtime_<?=$vm->uuid?>">[time]</span>
                 
-                
-                <p><?=($vm->checkGuestAgent() ? '' : 'NO GUEST AGENT!')?></p>
-                
             </td>
             <td style="text-align: right;">
                 <button 
                     disabled 
                     id="view1_btn_createsnap_<?=$vm->uuid?>"
                     onclick="createSnapshot('<?=$vm->name?>')"><?=LANG_GUI_BTN_CREATE_SNAP?></button>
+                <p style="margin: 0px; padding: 0px;"><?=($vm->checkGuestAgent() ? '' : 'NO GUEST AGENT!')?></p>
             </td>
         </tr>
         <?php foreach($vm->disks as $disk): ?>
@@ -225,6 +222,11 @@ Icon="clone"
                     $('.view1_btn_revert_' + e.id).prop('disabled', true);
                 }
 
+            }
+
+            if(!e.guestagent) {
+                $('#view1_btn_createsnap_' + e.id).prop('disabled', true);
+                $('.view1_btn_commit_' + e.id).prop('disabled', true);
             }
 
         });

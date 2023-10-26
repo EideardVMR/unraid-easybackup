@@ -77,8 +77,6 @@ $timeranges = CreateTimeranges();
                         style="color: red; display: none;" 
                         id="view2_text_runningtime_<?=$vm->uuid?>">[time]</span>
                     
-                    <p><?=($vm->checkGuestAgent() ? '' : 'NO GUEST AGENT!')?></p>
-                    
                 </td>
                 <td><?=$last_backup?></td>
                 <td><?=count($backups)?></td>
@@ -88,7 +86,9 @@ $timeranges = CreateTimeranges();
                         disabled
                         id="view2_btn_backupnow_<?=$vm->uuid?>" 
                         onclick="backupnow_vm('<?=$vm->name?>')" 
-                    ><?=_(LANG_GUI_BTN_BACKUPNOW)?></button></td>
+                    ><?=_(LANG_GUI_BTN_BACKUPNOW)?></button>
+                    <p style="margin: 0px; padding: 0px;"><?=($vm->checkGuestAgent() ? '' : 'NO GUEST AGENT!')?></p>
+                </td>
             </tr>
             <?php foreach($backups as $backup): ?>
             <tr class="wrapper block-<?=$key?>" style="display: none;">
@@ -190,6 +190,10 @@ $timeranges = CreateTimeranges();
                 $('.view2_btn_restore_' + e.id).prop('disabled', true);
             } else {
                 $('.view2_btn_restore_' + e.id).prop('disabled', false);
+            }
+
+            if(!e.guestagent && e.state != 'shut off') {
+                $('#view2_btn_backupnow_' + e.id).prop('disabled', true);
             }
 
         });
