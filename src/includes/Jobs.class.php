@@ -30,7 +30,8 @@ class Jobs {
         self::$$category[] = [
             'id' => $id,
             'job' => $type,
-            'time' => time()            
+            'time' => time(),
+            'pid' => getmypid()
         ];
 
         Log::LogDebug('Add job in category "' . $category . '" with id "' . $id . '"');
@@ -148,6 +149,52 @@ class Jobs {
                 JobCategory::OTHER => self::$others
             ]
         ));
+    }
+
+    public static function deleteAbortedJobs($notify = false) {
+
+        $jobs = self::getAll();
+        foreach($jobs[JobCategory::VM] as $vm) {
+            cmdExec('ps aux | grep ' . $vm['pid'], $output, $error);
+            foreach(explode("\n", $output) as $ps) {
+                preg_match('/root[ ]+'.$vm['pid'].'(.*)/', $output, $output_array);
+                if(count($output_array) > 1) {
+                    continue 2;
+                }
+            }
+            self::remove( JobCategory::VM, $vm['job'], $vm['id'] );
+            if($notify) {
+                sendNotification("Aborted job deleted<br>Category: VM<br>Type: " . $vm['job'] . "", 'warning');
+            }
+        }
+
+        foreach($jobs[JobCategory::CONTAINER] as $vm) {
+            cmdExec('ps aux | grep ' . $vm['pid'], $output, $error);
+            foreach(explode("\n", $output) as $ps) {
+                preg_match('/root[ ]+'.$vm['pid'].'(.*)/', $output, $output_array);
+                if(count($output_array) > 1) {
+                    continue 2;
+                }
+            }
+            self::remove( JobCategory::CONTAINER, $vm['job'], $vm['id'] );
+            if($notify) {
+                sendNotification("Aborted job deleted<br>Category: Container<br>Type: " . $vm['job'] . "", 'warning');
+            }
+        }
+
+        foreach($jobs[JobCategory::OTHER] as $vm) {
+            cmdExec('ps aux | grep ' . $vm['pid'], $output, $error);
+            foreach(explode("\n", $output) as $ps) {
+                preg_match('/root[ ]+'.$vm['pid'].'(.*)/', $output, $output_array);
+                if(count($output_array) > 1) {
+                    continue 2;
+                }
+            }
+            self::remove( JobCategory::OTHER, $vm['job'], $vm['id'] );
+            if($notify) {
+                sendNotification("Aborted job deleted<br>Category: Other<br>Type: " . $vm['job'] . "", 'warning');
+            }
+        }
     }
 
 }
