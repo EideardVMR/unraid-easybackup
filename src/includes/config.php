@@ -26,6 +26,13 @@ class Config {
     public static $APPDATA_IGNORE_BINDES = [];
     #endregion
 
+    #region Flash
+    /** Aktiviert/Deaktiviert das sichern von Containern */
+    public static $ENABLE_FLASH_BACKUP = false;
+    /** Pfad zum Backup Ordner für Docker Container */
+    public static $FLASH_BACKUP_PATH = '/mnt/user/backup_internal/flash/';
+    #endregion
+
     #region Komprimierung
     /** Komprimierung einschalten */
     public static $COMPRESS_BACKUP = true;
