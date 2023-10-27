@@ -417,7 +417,7 @@ Icon="clone"
     </blockquote>
 
     <dl>
-        <dt style="cursor: help" onclick="help('help20')">Loglevel:</dt>
+        <dt style="cursor: help" onclick="help('help20')">Max. Log Size:</dt>
         <dd>
             <input type="number" name="LOG_MAX_SIZE" value="<?=Config::$LOG_MAX_SIZE / 1024 / 1024?>"> MB
         </dd>
