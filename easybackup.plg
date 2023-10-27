@@ -13,7 +13,7 @@
     <SUPPORT>https://forums.unraid.net/topic/145044-plugin-easybackup/</SUPPORT>
     <CHANGES>
 ###2023.10.29
-- Add: Snapshot and backup of started VMs can no longer be started.
+- Add: Snapshots and backups of started VMs can no longer be performed if no GuestAgent is installed or available.
 - Add: Log file now contains all commands executed on the system and their return in debug mode
 - Add: Log files are now compressed from a configurable size. See help text in the settings.
 - Add: Experimental function to create a flash backup
@@ -21,7 +21,7 @@
        are now also released again in the GUI. An error message is output accordingly via the notifications. 
        A check for unexpected terminations only takes place when the GUI is opened or the cron job starts as scheduled. 
 - Fix: Text in warning boxes is now also readable in light designs
-- Fix: Gas agent is now reliably detected.
+- Fix: GuestAgent is now reliably detected.
 - Fix: The log file is now downloaded with the correct file name
 ###2023.10.11b
 - Fix: Create snapshot reports error although everything is correct
