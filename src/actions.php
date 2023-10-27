@@ -143,6 +143,9 @@ if($_POST['action'] == 'create_snap') {
     Config::$ENABLE_APPDATA_BACKUP = $_POST['ENABLE_APPDATA_BACKUP'] == 'true';
     Config::$APPDATA_BACKUP_PATH = $_POST['APPDATA_BACKUP_PATH'];
 
+    Config::$ENABLE_FLASH_BACKUP = $_POST['ENABLE_FLASH_BACKUP'] == 'true';
+    Config::$FLASH_BACKUP_PATH = $_POST['FLASH_BACKUP_PATH'];
+
     Config::$COMPRESS_BACKUP = $_POST['COMPRESS_BACKUP'] == 'true';
     Config::$COMPRESS_TYPE = $_POST['COMPRESS_TYPE'];
 
@@ -161,6 +164,7 @@ if($_POST['action'] == 'create_snap') {
     Config::$GOTIFY_PUSH_ON_ERROR = $_POST['GOTIFY_PUSH_ON_ERROR'] == 'true';
     Config::$GOTIFY_COMPLETE_MESSAGE = $_POST['GOTIFY_COMPLETE_MESSAGE'];
 
+    Config::$LOG_MAX_SIZE = $_POST['LOG_MAX_SIZE'] * 1024 * 1024;
     Config::$LOG_LEVEL = $_POST['LOG_LEVEL'];
     
     if(Config::saveConfig() === true) {
@@ -225,6 +229,14 @@ if($_POST['action'] == 'create_snap') {
 
     echo "OK";
     exit;
+
+} else if($_POST['action'] == 'backup_flash'){
+
+    exec('php /usr/local/emhttp/plugins/easybackup/job.php backup flash > /dev/null &');
+
+    echo "OK";
+    exit;
+    
 }
 
 

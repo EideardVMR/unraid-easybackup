@@ -1,6 +1,8 @@
 <?php
 
 require_once '/usr/local/emhttp/plugins/easybackup/includes/loader.php';
+    
+Jobs::deleteAbortedJobs(true);
 
 if(($argv[1] ?? '') == 'backup') {
     
@@ -16,34 +18,44 @@ if(($argv[1] ?? '') == 'backup') {
             'Time' => 0
         ];
 
-        $kvm = new KVM();
-        $vms = $kvm->getVMs();
-        foreach($vms as $vm) {
+        if(Config::$ENABLE_VM_BACKUP) {
+            $kvm = new KVM();
+            $vms = $kvm->getVMs();
+            foreach($vms as $vm) {
 
-            if(!$vm->createBackup()) {
-                $backupstate = false;
+                if(!$vm->createBackup()) {
+                    $backupstate = false;
+                }
+
+                $backup_compressioninfo['Files'] += $vm->backup_compressioninfo['Files'];
+                $backup_compressioninfo['OriginalSize'] += $vm->backup_compressioninfo['OriginalSize'];
+                $backup_compressioninfo['CompressedSize'] += $vm->backup_compressioninfo['CompressedSize'];
+                $backup_compressioninfo['Time'] += $vm->backup_compressioninfo['Time'];
+
             }
-
-            $backup_compressioninfo['Files'] += $vm->backup_compressioninfo['Files'];
-            $backup_compressioninfo['OriginalSize'] += $vm->backup_compressioninfo['OriginalSize'];
-            $backup_compressioninfo['CompressedSize'] += $vm->backup_compressioninfo['CompressedSize'];
-            $backup_compressioninfo['Time'] += $vm->backup_compressioninfo['Time'];
-
         }
         
-        $docker = new Docker();
-        $containers = $docker->getContainers();
-        foreach($containers as $container) {
+        if(config::$ENABLE_APPDATA_BACKUP) {
+            $docker = new Docker();
+            $containers = $docker->getContainers();
+            foreach($containers as $container) {
 
-            if(!$container->createBackup()){
+                if(!$container->createBackup()){
+                    $backupstate = false;
+                }
+                
+                $backup_compressioninfo['Files'] += $vm->backup_compressioninfo['Files'];
+                $backup_compressioninfo['OriginalSize'] += $vm->backup_compressioninfo['OriginalSize'];
+                $backup_compressioninfo['CompressedSize'] += $vm->backup_compressioninfo['CompressedSize'];
+                $backup_compressioninfo['Time'] += $vm->backup_compressioninfo['Time'];
+
+            }
+        }
+
+        if(Config::$ENABLE_FLASH_BACKUP) {
+            if(!BackupFlash()){
                 $backupstate = false;
             }
-            
-            $backup_compressioninfo['Files'] += $vm->backup_compressioninfo['Files'];
-            $backup_compressioninfo['OriginalSize'] += $vm->backup_compressioninfo['OriginalSize'];
-            $backup_compressioninfo['CompressedSize'] += $vm->backup_compressioninfo['CompressedSize'];
-            $backup_compressioninfo['Time'] += $vm->backup_compressioninfo['Time'];
-
         }
 
         if($backupstate) {
@@ -104,6 +116,9 @@ if(($argv[1] ?? '') == 'backup') {
 
     }
 
+    if(($argv[2] ?? '') == 'flash') {
+        BackupFlash();
+    }
 }
 
 if(($argv[1] ?? '') == 'cleanup') {

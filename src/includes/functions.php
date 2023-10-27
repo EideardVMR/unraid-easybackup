@@ -257,22 +257,21 @@ function CopyFile($source, $destination, $progress = true, $delete_source_after_
     return true;
 }
 
-function scandirRecursive($path){
-    if(mb_substr($path, mb_strlen($path) - 1) !== '/') {
-        $path .= '/';
-    }
-    $elements = scandir($path);
-    $files = [];
-    foreach($elements as $e) {
-        if(in_array($e, ['.', '..'])) { continue; }
-        if(is_file($path . $e)) {
-            $files[] = $path . $e;
-        } else if(is_dir($path . $e)){
-            $tmp = scandirRecursive($path . $e . '/');
-            $files = array_merge($files, $tmp);
+function scandirRecursive($dir, &$results = array()) {
+
+    $files = scandir($dir);
+
+    foreach ($files as $value) {
+        $path = realpath($dir . DIRECTORY_SEPARATOR . $value);
+        if (!is_dir($path)) {
+            $results[] = $path;
+        } else if ($value != "." && $value != "..") {
+            scandirRecursive($path, $results);
+            //$results[] = $path;
         }
     }
-    return $files;
+
+    return $results;
 }
 
 function DeleteDirectory(){
@@ -804,6 +803,49 @@ function cmdExec($command, &$msg, &$error){
     if(mb_strlen($error) > 0) {
         Log::LogDebug("Exec Reported Error: " . $error);
     }
+
+}
+
+function BackupFlash(){
+    
+    Log::LogDebug('Flash: Start Backup');
+
+    $zip = new ZipArchive();
+
+    $targetpath = Config::$FLASH_BACKUP_PATH . date('Y-m-d_H.i.s') . '.zip';
+    Log::LogDebug('Flash: Targetfile ' . $targetpath);
+
+    if(!file_exists(Config::$FLASH_BACKUP_PATH)) {
+        createdirs(Config::$FLASH_BACKUP_PATH);
+        Log::LogInfo('Flash: Create Backuppath: ' . Config::$FLASH_BACKUP_PATH);
+    }
+
+    if(!$zip->open($targetpath, ZipArchive::CREATE)) {
+        Log::LogError('Flash: Create ' . $targetpath . ' failed');
+        return false;
+    }
+
+    $files = scandirRecursive('/boot');
+
+    foreach($files as $file) {
+        if(strpos($file, '/boot/.git') === false && strpos($file, '/boot/previous') === false) {
+
+            $file_target = substr($file, 1);
+
+            if(!$zip->addFile($file, $file_target)){
+                Log::LogError('Flash: Could not add file: ' . $file);
+                return false;
+            }
+
+        }
+    }
+
+    if(!$zip->close()) {
+        Log::LogError('Flash: Backup failed: ' . $zip->getStatusString());
+        return false;
+    }
+    Log::LogInfo('Flash: Backup created: ' . $zip->getStatusString());
+    return true;
 
 }
 

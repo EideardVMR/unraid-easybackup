@@ -118,6 +118,53 @@ Icon="clone"
         <p>Specify the location for the backups. A folder with the name of the respective VM is created automatically.</p>
     </blockquote>
 
+    <div class="title">
+        <span class="left"><?=LANG_GUI_HEADER_FLASH?></span>
+    </div>
+    <div style="background-color: #fff6bf; border: 1px solid #ffd324; color: #000; padding: 10px; margin-bottom: 30px;">
+        <p>This is an experimental feature. Please do not rely on a backup of the flash being correct! Test regularly 
+            if the backup on a stick has worked.</p><p>With your help and feedback I can verify if this feature works as expected. 
+            Therefore I ask you to open a new issue on <a href="https://github.com/EideardVMR/unraid-easybackup">Github</a> and report if everything worked or not. Thank you very much for that!
+        </p>
+
+        <p>Remember that you do not activate your license on the test stick. Because you can do this only once a year without the support! </p>
+    </div>
+    <dl>
+        <dt style="cursor: help" onclick="help('help21')">Enable Flash Backup:</dt>
+        <dd>
+            <select name="ENABLE_FLASH_BACKUP" id="">
+                <option value="true" <?= (Config::$ENABLE_FLASH_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_ENABLED)?></option>
+                <option value="false" <?= (!Config::$ENABLE_FLASH_BACKUP ? 'selected' : '' ) ?>><?=_(LANG_GUI_DISABLED)?></option>
+            </select>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help21">
+        <p>Enable or disable automatic backups for the flash drive.</p>
+    </blockquote>
+
+    <dl>
+        <dt style="cursor: help" onclick="help('help22')">Backup location:</dt>
+        <dd>
+            <input 
+                type="text" 
+                id="FLASH_BACKUP_PATH" 
+                name="FLASH_BACKUP_PATH" 
+                autocomplete="off" 
+                spellcheck="false" 
+                data-pickroot="/mnt/" 
+                data-pickfolders="true"
+                data-pickfilter="NO_FILES_FILTER"
+                pattern="^\/mnt\/(([\w.-]+)( [\w.-]+)*)*(\/(([\w.-]+)( [\w.-]+)*)*)*$"
+                value="<?=Config::$FLASH_BACKUP_PATH?>" 
+                placeholder="Select a backup location" 
+                style="display: inline-block;">
+            <div class="textarea fileTree"></div>
+        </dd>
+    </dl>
+    <blockquote style="display: none;" id="help22">
+        <p>Specify the location for the backups. A folder with the name of the respective VM is created automatically.</p>
+    </blockquote>
+
 
     <div class="title">
         <span class="left"><?=LANG_GUI_HEADER_COMPRESSOION?></span>
@@ -372,7 +419,7 @@ Icon="clone"
     <dl>
         <dt style="cursor: help" onclick="help('help20')">Loglevel:</dt>
         <dd>
-            <input type="number" name="LOG_MAX_SIZE" value="<?=Config::$LOG_MAX_SIZE?>"> B
+            <input type="number" name="LOG_MAX_SIZE" value="<?=Config::$LOG_MAX_SIZE / 1024 / 1024?>"> MB
         </dd>
     </dl>
     <blockquote style="display: none;" id="help20">

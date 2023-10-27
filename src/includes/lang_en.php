@@ -1,7 +1,7 @@
 <?php
 // Allgemeine Informationen
-define('NAME', 'Unraid All Backup');
-define('VERSION', '0.1.0');
+define('NAME', 'Easybackup');
+define('VERSION', '2023.10.27');
 
 // Sicherheitshinweise
 define('LANG_GUI_SECURITYNOTE_SNAPSHOT', '
@@ -49,6 +49,7 @@ define('LANG_GUI_HEADER_BACKUPS', 'Backups');
 define('LANG_GUI_HEADER_SETTINGS', 'Settings');
 define('LANG_GUI_HEADER_VMS', 'VMs');
 define('LANG_GUI_HEADER_CONTAINER', 'Container');
+define('LANG_GUI_HEADER_FLASH', 'Flashdrive');
 define('LANG_GUI_HEADER_COMPRESSOION', 'Compression');
 define('LANG_GUI_HEADER_GOTIFY', 'Gotify');
 define('LANG_GUI_HEADER_RECYCLE', 'Recycle Bin');
