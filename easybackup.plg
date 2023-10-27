@@ -12,6 +12,17 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <SUPPORT>https://forums.unraid.net/topic/145044-plugin-easybackup/</SUPPORT>
     <CHANGES>
+###2023.10.29
+- Add: Snapshot and backup of started VMs can no longer be started.
+- Add: Log file now contains all commands executed on the system and their return in debug mode
+- Add: Log files are now compressed from a configurable size. See help text in the settings.
+- Add: Experimental function to create a flash backup
+- Fix: Tasks that are aborted, for example, by shutting down the system or unexpected errors, 
+       are now also released again in the GUI. An error message is output accordingly via the notifications. 
+       A check for unexpected terminations only takes place when the GUI is opened or the cron job starts as scheduled. 
+- Fix: Text in warning boxes is now also readable in light designs
+- Fix: Gas agent is now reliably detected.
+- Fix: The log file is now downloaded with the correct file name
 ###2023.10.11b
 - Fix: Create snapshot reports error although everything is correct
 ###2023.10.11
