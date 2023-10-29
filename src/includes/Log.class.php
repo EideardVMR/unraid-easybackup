@@ -45,10 +45,19 @@ class Log {
             exit;
         }
         file_put_contents(Config::$LOG_WRITE_PATH, $msg, FILE_APPEND);
-
+        
+        clearstatcache();
         $fs = filesize(Config::$LOG_WRITE_PATH);
+        //PrintScreen('Filsize: ' . number_format($fs/1024/1024, 2));
+        
         if($fs > Config::$LOG_MAX_SIZE) {
-            cmdExec('tar cfz boot/config/plugins/easybackup/old_logs.tar.gz boot/config/plugins/easybackup/easybackup.log', $exec_out, $error);
+            //PrintScreen('Log oversized!!!', COLOR_RED);
+
+            rename("/boot/config/plugins/easybackup/easybackup.log", "/boot/config/plugins/easybackup/easybackup.log_old");
+            //cmdExec('tar cfz "/boot/config/plugins/easybackup/old_logs.tar.gz" "/boot/config/plugins/easybackup/easybackup.log"', $exec_out, $error);
+            //PrintScreen('MSG: ' . $exec_out, COLOR_BLUE);
+            //PrintScreen('ERR: ' . $error, COLOR_RED);
+            unlink("/boot/config/plugins/easybackup/easybackup.log");
         }
     }
 
