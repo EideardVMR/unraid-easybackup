@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "easybackup">
 <!ENTITY author "Sascha Michel">
-<!ENTITY version "2023.10.11b">
-<!ENTITY md5 "6a6f75e230262d70a223551f9f51a81f">
+<!ENTITY version "2023.10.29">
+<!ENTITY md5 "c56604c1c9bf6ebe0d34aecb695be28c">
 <!ENTITY launch "Settings/easybackup">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github "EideardVMR/unraid-easybackup">
@@ -15,7 +15,7 @@
 ###2023.10.29
 - Add: Snapshots and backups of started VMs can no longer be performed if no GuestAgent is installed or available.
 - Add: Log file now contains all commands executed on the system and their return in debug mode
-- Add: Log files are now compressed from a configurable size. See help text in the settings.
+- Add: The log file will now be renamed after reaching the set maximum size. See more in the help text under Settings
 - Add: Experimental function to create a flash backup
 - Fix: Tasks that are aborted, for example, by shutting down the system or unexpected errors, 
        are now also released again in the GUI. An error message is output accordingly via the notifications. 
