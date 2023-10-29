@@ -824,7 +824,7 @@ class VM {
         ];
 
         $target_path .= '/';
-        Log::LogInfo('Container: Backup without Compression to: ' . $target_path);
+        Log::LogInfo('VM: Backup without Compression to: ' . $target_path);
 
         if(!CheckFilesExists($target_path)) {
             mkdir($target_path, 0777, true);
@@ -842,13 +842,13 @@ class VM {
             }
 
             if(!copy($tf['full_path'], $target_path . $tf['r_path'])) {
-                Log::LogError('Container: Could not create "' . $tf['full_path'] . '"');
+                Log::LogError('VM: Could not create "' . $tf['full_path'] . '"');
                 return false;
             }
         }
 
         if(file_put_contents($target_path . 'fileinfo.json', json_encode($this->getFileInfos($target_files))) === false){
-            Log::LogError('Container: Could not create fileinfo.json');
+            Log::LogError('VM: Could not create fileinfo.json');
             $this->backup_compressioninfo['Files']++;
             $this->backup_compressioninfo['OriginalSize'] += strlen(json_encode($this->getFileInfos($target_files)));
             return false;
@@ -882,7 +882,7 @@ class VM {
             mkdir($pi['dirname'] . '/', 0777, true);
         }
 
-        Log::LogInfo('Container: Backup with Zip Compression to: ' . $target_path);
+        Log::LogInfo('VM: Backup with Zip Compression to: ' . $target_path);
 
         $zip = new ZipArchive();
         if(!$zip->open($target_path, ZipArchive::CREATE)) {
@@ -896,20 +896,20 @@ class VM {
             $this->backup_compressioninfo['OriginalSize'] += filesize($tf['full_path']);
             
             if(!$zip->addFile($tf['full_path'], $tf['r_path'])){
-                Log::LogError('Container: Could not create "' . $tf['full_path'] . '"');
+                Log::LogError('VM: Could not create "' . $tf['full_path'] . '"');
                 return false;
             }
         }
 
         if(!$zip->addFromString('fileinfo.json', json_encode($this->getFileInfos($target_files)))) {
-            Log::LogError('Container: Could not create fileinfo.json');
+            Log::LogError('VM: Could not create fileinfo.json');
             $this->backup_compressioninfo['Files']++;
             $this->backup_compressioninfo['OriginalSize'] += strlen(json_encode($this->getFileInfos($target_files)));
             return false;
         }
 
         if(!$zip->close()) {
-            Log::LogError('Container: Could not close archive: ' . $target_path);
+            Log::LogError('VM: Could not close archive: ' . $target_path . "\nError: ". $zip->getStatusString());
             return false;
         }
 
@@ -943,7 +943,7 @@ class VM {
             mkdir($pi['dirname'] . '/', 0777, true);
         }
 
-        Log::LogInfo('Container: Backup with GZ Compression to: ' . $target_path);
+        Log::LogInfo('VM: Backup with GZ Compression to: ' . $target_path);
 
         $command = 'tar -czf ' . $target_path;       
         foreach($target_files as $tf) {
@@ -956,7 +956,7 @@ class VM {
         }
 
         if(file_put_contents($pi['dirname'] . '/fileinfo.json', json_encode($this->getFileInfos($target_files))) === false){
-            Log::LogError('Container: Could not create fileinfo.json');
+            Log::LogError('VM: Could not create fileinfo.json');
             $this->backup_compressioninfo['Files']++;
             $this->backup_compressioninfo['OriginalSize'] += filesize($pi['dirname'] . '/fileinfo.json');
             return false;
