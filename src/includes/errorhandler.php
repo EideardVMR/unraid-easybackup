@@ -120,13 +120,13 @@ function myErrorHandler($errno, $errstr = '', $errfile = '', $errline = 0) {
     }
     
     if($logtype == LogType::LOG_ERROR) {
-        Log::LogError($errstr, $errline);
+        Log::LogError("$errstr\nFile: $errfile\nLine: $errline");
         Log::LogError('Trace:');
     } else if($logtype == LogType::LOG_WARNING) {
-        Log::LogWarning($errstr, $errline);
+        Log::LogWarning("$errstr\nFile: $errfile\nLine: $errline");
         Log::LogWarning('Trace:');
     } else if($logtype == LogType::LOG_INFO) {
-        Log::LogInfo($errstr, $errline);
+        Log::LogInfo("$errstr\nFile: $errfile\nLine: $errline");
         Log::LogInfo('Trace:');
     }
     
