@@ -7,6 +7,8 @@ Log::$logging = false;
 $kvm = new KVM();
 $vms = $kvm->getVMs();
 
+Jobs::deleteAbortedJobs(true);
+
 $jobs = Jobs::getAll();
 $status = [];
 
