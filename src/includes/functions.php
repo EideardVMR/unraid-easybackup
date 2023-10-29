@@ -18,9 +18,14 @@ function print_debug($debug){
 
 function sendNotification($message, $type = 'normal'){
     if($type != 'normal' && $type != 'alert' && $type != 'warning') { $type = 'warning'; }
-    exec('/usr/local/emhttp/webGui/scripts/notify -i ' . $type . ' -d "' . $message . '" -s "' . NAME . '"', $exec_out);
+    cmdExec('/usr/local/emhttp/webGui/scripts/notify -i ' . $type . ' -d "' . $message . '" -s "' . NAME . '"', $exec_out, $error);
     Log::LogInfo('Create Message: ' . $message);
-    Log::LogInfo(print_r($exec_out, true));
+    if(strlen($exec_out) > 0) {
+        Log::LogInfo('Notify result: ' . $exec_out);
+    }
+    if(strlen($error) > 0) {
+        Log::LogError('Notify error result: ' . $exec_out);
+    }
 }
 
 function padit($c = 1){
@@ -260,12 +265,15 @@ function CopyFile($source, $destination, $progress = true, $delete_source_after_
 function scandirRecursive($dir, &$results = array()) {
 
     $files = scandir($dir);
+    //Log::LogInfo("scandir Start: " . $dir);
 
     foreach ($files as $value) {
         $path = realpath($dir . DIRECTORY_SEPARATOR . $value);
-        if (!is_dir($path)) {
+        if (is_file($path)) {
+            //Log::LogInfo("scandir File: " . $path);
             $results[] = $path;
-        } else if ($value != "." && $value != "..") {
+        } else if (is_dir($path) && $value != "." && $value != "..") {
+            //Log::LogInfo("scandir Dir: " . $path);
             scandirRecursive($path, $results);
             //$results[] = $path;
         }

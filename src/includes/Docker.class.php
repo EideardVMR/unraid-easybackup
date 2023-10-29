@@ -234,6 +234,13 @@ class Container {
                     'r_path' => $r_path,
                     'source' => join('/',$ex) . '/'
                 ];
+
+                if(strlen($full_path) == 0 || strlen($r_path) == 0) {
+                    Log::LogError("Container: Path is empty\nfull_path: $full_path\nr_path: $r_path\nSource: ".$copy_files[array_key_last($copy_files)]['source']."\nOriginal: $mf");
+                    sendNotification("A file is not found. Show Log for more Informations.", 'alert');
+                    Jobs::remove(JobCategory::CONTAINER, 'backup', $this->id);
+                    exit;
+                }
             }
 
             Log::LogInfo('Container: Backup ' . count($mountfiles) . ' files of "' . $mount['Source'] . '"');
@@ -413,7 +420,7 @@ class Container {
         }
 
         if(!$zip->close()) {
-            Log::LogError('Container: Could not close archive: ' . $target_path);
+            Log::LogError('Container: Could not close archive: ' . $target_path . "\nError: ". $zip->getStatusString());
             return false;
         }
 
