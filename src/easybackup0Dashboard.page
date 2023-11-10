@@ -7,7 +7,7 @@ Icon="clone"
 require_once '/usr/local/emhttp/plugins/easybackup/includes/loader.php';
 
 Jobs::deleteAbortedJobs(true);
-
+ 
 
 if ($var['fsState'] != "Started") {
     echo "<div class='notice shift'>"._(LANG_GUI_NOTE_ARRAY_OFFLINE).".</div>";
