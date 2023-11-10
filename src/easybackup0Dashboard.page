@@ -21,7 +21,7 @@ $libvirt_running = trim(shell_exec( "[ -f /proc/`cat /var/run/libvirt/libvirtd.p
 if($libvirt_running != 'yes') {
     echo "<div class='notice shift'>"._(LANG_GUI_NOTE_VMSERVICE_STOPPED).".</div>";
     exit;
-}
+} 
 
 $kvm = new KVM();
 $vms = $kvm->getVMs();
