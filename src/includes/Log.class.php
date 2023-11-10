@@ -2,6 +2,8 @@
 class Log {
 
     static $logging = true;
+    static $printInCLI = false;
+    static $stream = null;
 
     static function LogError($msg) {
         self::Write(3, $msg);
@@ -22,6 +24,10 @@ class Log {
     static function Write($level, $msg){
         
         if(!self::$logging) { return; }
+
+        if(self::$stream === null) {
+            self::$stream = fopen(Config::$LOG_WRITE_PATH, 'a+');
+        }
         
         $type = ' UUUUU ';
 
@@ -36,7 +42,7 @@ class Log {
 
         $msg = date('Y-m-d H:i:s') . $type . $msg . "\r\n";
 
-        if(isCommandLineInterface()) {
+        if(isCommandLineInterface() && self::$printInCLI) {
             echo $msg;
         }
 
@@ -48,20 +54,17 @@ class Log {
             echo "Not writeable: " . Config::$LOG_WRITE_PATH;
             exit;
         }
-        file_put_contents(Config::$LOG_WRITE_PATH, $msg, FILE_APPEND);
+
+        fwrite(self::$stream, $msg);
         
         clearstatcache();
         $fs = filesize(Config::$LOG_WRITE_PATH);
-        //PrintScreen('Filsize: ' . number_format($fs/1024/1024, 2));
         
         if($fs > Config::$LOG_MAX_SIZE) {
-            //PrintScreen('Log oversized!!!', COLOR_RED);
-
+            fclose(self::$stream);
             rename("/boot/config/plugins/easybackup/easybackup.log", "/boot/config/plugins/easybackup/easybackup.log_old");
-            //cmdExec('tar cfz "/boot/config/plugins/easybackup/old_logs.tar.gz" "/boot/config/plugins/easybackup/easybackup.log"', $exec_out, $error);
-            //PrintScreen('MSG: ' . $exec_out, COLOR_BLUE);
-            //PrintScreen('ERR: ' . $error, COLOR_RED);
             unlink("/boot/config/plugins/easybackup/easybackup.log");
+            self::$stream = fopen(Config::$LOG_WRITE_PATH, 'a+');
         }
     }
 
