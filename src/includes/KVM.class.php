@@ -1124,12 +1124,10 @@ class KVM {
                 $vm->name = trim($arr[2]);
                 $vm->state = VMState::tryFrom(trim($arr[3])) ?? VMState::STATE_UNKNOWN;
                 
-                $vm->getXML();
                 $vm->loadUsedDisks();
                 $vm->loadInfo();
 
                 $this->vms[] = $vm;
-
             }
         }
 
