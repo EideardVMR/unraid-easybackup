@@ -787,9 +787,10 @@ function cmdExec($command, &$msg, &$error){
         2 => ['pipe', 'w']
     ];
 
-    Log::LogDebug('Start Command: ' . $command);
+    Log::LogInfo('Start Command: ' . $command);
     $proc = proc_open($command, $descriptorspec, $pipes);
     
+    $start = microtime(true);
     while(true) {
         $proc_details = proc_get_status($proc);
         if($proc_details['running'] !== 1) { break; }
@@ -804,6 +805,7 @@ function cmdExec($command, &$msg, &$error){
     while($tmp = fread($pipes[2], 10)) {
         $error .= $tmp;
     }
+    Log::LogDebug('    Loadingtime: ' . microtime(true) - $start . 's');
 
     if(mb_strlen($msg) > 0) {
         Log::LogDebug("Exec Reported Message: \r\n" . $msg);
