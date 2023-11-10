@@ -766,7 +766,11 @@ class VM {
         // Backup mit kompression
         if(Config::$COMPRESS_BACKUP) {
 
-            if(Config::$COMPRESS_TYPE == 'zip') {
+            if(Config::$COMPRESS_TYPE == 'newzip') {
+
+                $backupstate = $this->BackupCompressZip2($copy_files, $target_path);
+
+            } else if(Config::$COMPRESS_TYPE == 'zip') {
 
                 $backupstate = $this->BackupCompressZip($copy_files, $target_path);
 
@@ -912,6 +916,57 @@ class VM {
             Log::LogError('VM: Could not close archive: ' . $target_path . "\nError: ". $zip->getStatusString());
             return false;
         }
+
+        $this->backup_compressioninfo['CompressedSize'] += filesize($target_path);
+        $this->backup_compressioninfo['Time'] = time() - $starttime;
+
+        return true;
+
+    }
+    
+    /**
+     * BackupCompressZip2
+     * Kopiert alle Dateien in eine ZipDatei
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup]
+     * @param  mixed $target_path Pfad zum Ziel
+     * @return bool true wenn es geklappt hat, sonst false
+     */
+    private function BackupCompressZip2($target_files, $target_path) : bool {
+        
+        $this->backup_compressioninfo = [
+            'Files' => 0,
+            'OriginalSize' => 0,
+            'CompressedSize' => 0,
+            'Time' => 0
+        ];
+
+        $target_path .= '.zip';
+        $pi = pathinfo($target_path);
+        if(!CheckFilesExists($pi['dirname'] . '/')) {
+            mkdir($pi['dirname'] . '/', 0777, true);
+        }
+
+        Log::LogInfo('VM: Backup with new Zip Compression to: ' . $target_path);
+      
+        $starttime = time();
+        foreach($target_files as $tf) {
+            
+            $this->backup_compressioninfo['Files']++;
+            $this->backup_compressioninfo['OriginalSize'] += filesize($tf['full_path']);
+            
+            $pix = pathinfo($tf['full_path']);
+
+
+            cmdExec("cd \"" . $pix['dirname'] . "/\" && zip -rq \"$target_path\" \"" . $pix['basename'] . "\"", $msg, $err);
+
+        }
+
+        file_put_contents('/tmp/fileinfo.json', json_encode($this->getFileInfos($target_files)));
+
+        cmdExec("cd /tmp && zip -rq \"$target_path\" fileinfo.json", $msg, $err);
+
+        unlink('/tmp/fileinfo.json');
 
         $this->backup_compressioninfo['CompressedSize'] += filesize($target_path);
         $this->backup_compressioninfo['Time'] = time() - $starttime;

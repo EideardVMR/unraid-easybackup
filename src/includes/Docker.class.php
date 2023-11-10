@@ -206,6 +206,7 @@ class Container {
 
         // Dateien für das Backup ermitteln
         $copy_files = [];
+        $copy_mounts = [];
         foreach($this->mounts as $mount) {
 
             // Ignoriere Mounts die nicht vom Type "bind" sind
@@ -219,6 +220,8 @@ class Container {
                 Log::LogInfo('Container: Mount "' . $mount['Source'] . '" is disabled by user. Mount ignored');
                 continue;
             }
+
+            $copy_mounts[] = $mount['Source'];
 
             // Dateien zusammensuchen
             $mountfiles = scandirRecursive($mount['Source']);
@@ -255,7 +258,9 @@ class Container {
 
         $backupstate = false;
         if(Config::$COMPRESS_BACKUP) {
-            if(Config::$COMPRESS_TYPE == 'zip') {
+            if(Config::$COMPRESS_TYPE == 'newzip') {
+                $backupstate = $this->BackupCompressZip2($copy_files, $target_path, $copy_mounts);
+            } else if(Config::$COMPRESS_TYPE == 'zip') {
                 $backupstate = $this->BackupCompressZip($copy_files, $target_path);
             } else if(Config::$COMPRESS_TYPE == 'tar.gz') {
                 $backupstate = $this->BackupCompressGz($copy_files, $target_path);
@@ -423,6 +428,59 @@ class Container {
             Log::LogError('Container: Could not close archive: ' . $target_path . "\nError: ". $zip->getStatusString());
             return false;
         }
+
+        $this->backup_compressioninfo['CompressedSize'] += filesize($target_path);
+        $this->backup_compressioninfo['Time'] = time() - $starttime;
+
+        return true;
+
+    }
+
+    /**
+     * BackupCompressZip
+     * Kopiert alle Dateien in eine ZipDatei
+     * @param  mixed $target_files Array mit den Dateien die kopiert werden.
+     * Jedes Array muss folgendes enthalten: ['full_path' => Voller Pfad zur Datei, 'r_path' => Pfad im Backup]
+     * @param  mixed $target_path Pfad zum Ziel
+     * @return bool true wenn es geklappt hat, sonst false
+     */
+    private function BackupCompressZip2($target_files, $target_path, $copy_mounts) : bool {
+        
+        $this->backup_compressioninfo = [
+            'Files' => 0,
+            'OriginalSize' => 0,
+            'CompressedSize' => 0,
+            'Time' => 0
+        ];
+
+        $target_path .= '.zip';
+        $pi = pathinfo($target_path);
+        if(!CheckFilesExists($pi['dirname'] . '/')) {
+            mkdir($pi['dirname'] . '/', 0777, true);
+        }
+
+        Log::LogInfo('Container: Backup with new Zip Compression to: ' . $target_path);
+
+        $starttime = time();
+        foreach($copy_mounts as $mount) {
+
+            $path = realpath($mount . '/../') . '/';
+            
+            #echo $path . "\n";
+            #echo "cd " . $path . " && zip -rq $target_path " . str_replace($path, '', $mount) . "\n";
+            #exit;
+
+            cmdExec("cd \"" . $path . "\" && zip -rq \"$target_path\" \"" . str_replace($path, '', $mount) . "\"", $msg, $err);
+            
+        }
+
+        file_put_contents('/tmp/mounts.json', json_encode($this->mounts));
+        file_put_contents('/tmp/fileinfo.json', json_encode($this->getFileInfos($target_files)));
+
+        cmdExec("cd /tmp && zip -rq \"$target_path\" mounts.json fileinfo.json", $msg, $err);
+
+        unlink('/tmp/fileinfo.json');
+        unlink('/tmp/mounts.json');
 
         $this->backup_compressioninfo['CompressedSize'] += filesize($target_path);
         $this->backup_compressioninfo['Time'] = time() - $starttime;

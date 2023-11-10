@@ -857,6 +857,11 @@ function BackupFlash(){
 
 }
 
+function isCommandLineInterface()
+{
+    return (php_sapi_name() === 'cli');
+}
+
 /*
 function jobAdd($type, $job_type , $uuid) {
     $jobs = [];

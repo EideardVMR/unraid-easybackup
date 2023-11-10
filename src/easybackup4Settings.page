@@ -186,15 +186,22 @@ Icon="clone"
         <dt style="cursor: help" onclick="help('help7')">Compression Type:</dt>
         <dd>
             <select name="COMPRESS_TYPE" id="">
-                <option value="zip" <?= (Config::$COMPRESS_TYPE ? 'selected' : '' ) ?>>Zip (recommended)</option>
-                <option value="tar.gz" <?= (!Config::$COMPRESS_TYPE ? 'selected' : '' ) ?>>GZ</option>
+                <option value="newzip" <?= (Config::$COMPRESS_TYPE == 'newzip' ? 'selected' : '' ) ?>>Zip (native)</option>
+                <option value="zip" <?= (Config::$COMPRESS_TYPE == 'zip' ? 'selected' : '' ) ?>>Zip (recommended)</option>
+                <option value="tar.gz" <?= (Config::$COMPRESS_TYPE == 'tar.gz' ? 'selected' : '' ) ?>>GZ</option>
             </select>
         </dd>
     </dl>
     <blockquote style="display: none;" id="help7">
         <p>
-            <span style="font-weight: bold">ZIP Compression: </span>
-            Sie ist langsamer als die GZ Komprimierung einer tar datei. Allerdings hat sie den Vorteil, dass einzelne Dateien aus der Zipdatei entnommen werden können ohne das ganze Archiv zu entpacken.
+            <span style="font-weight: bold">ZIP (native) Compression: </span>
+            This Zip compression is about as fast as the GZ compression. Current tests show that a backup can be performed 65% faster with this compression than with the currently recommended one.
+            <br><br>
+            In future updates, this compression method will become the recommended one. However, you can already try it out now. 
+        </p>
+        <p>
+            <span style="font-weight: bold">ZIP (recommended) Compression: </span>
+            It is slower than the GZ compression of a tar file. However, it has the advantage that individual files can be extracted from the zip file without unpacking the entire archive.
         </p>
         <p>
             <span style="font-weight: bold">GZ Compression: </span>
