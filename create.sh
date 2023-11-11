@@ -1,4 +1,4 @@
-version="2023.10.29"
+version="2023.11.11"
 
 tar -cf "/usr/local/emhttp/plugins/easybackup-$version.tar" "/usr/local/emhttp/plugins/easybackup/"
 xz -c -z "/usr/local/emhttp/plugins/easybackup-$version.tar" > "/usr/local/emhttp/plugins/easybackup-$version.txz"
