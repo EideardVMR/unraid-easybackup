@@ -12,6 +12,9 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <SUPPORT>https://forums.unraid.net/topic/145044-plugin-easybackup/</SUPPORT>
     <CHANGES>
+###2023.11.10
+- Add: Add more ZIP compression which is up to 65% faster. This option must be activated in the settings. In later versions this will be the recommended option. 
+- Fix: The GUI now loads faster
 ###2023.10.29
 - Add: Snapshots and backups of started VMs can no longer be performed if no GuestAgent is installed or available.
 - Add: Log file now contains all commands executed on the system and their return in debug mode
