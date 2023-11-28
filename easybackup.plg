@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name "easybackup">
 <!ENTITY author "Sascha Michel">
-<!ENTITY version "2023.11.11">
+<!ENTITY version "2023.11.28">
 <!ENTITY md5 "1cae93919102cef7e12eb1298e8b6d77">
 <!ENTITY launch "Settings/easybackup">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
@@ -12,6 +12,8 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.12.3" icon="file-text-o" support="https://forums.unraid.net/topic/48286-plugin-ca-user-scripts/">
     <SUPPORT>https://forums.unraid.net/topic/145044-plugin-easybackup/</SUPPORT>
     <CHANGES>
+###2023.11.10
+- Fix: no further attempt to create a backup of ignored VMs and containers.
 ###2023.11.10
 - Add: Add more ZIP compression which is up to 65% faster. This option must be activated in the settings. In later versions this will be the recommended option. 
 - Fix: The GUI now loads faster

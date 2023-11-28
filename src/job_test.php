@@ -18,6 +18,8 @@ if(($argv[1] ?? '') == 'backup') {
             'Time' => 0
         ];
 
+        print_r(Config::$VM_IGNORE_VMS);
+
         if(Config::$ENABLE_VM_BACKUP) {
             $kvm = new KVM();
             $vms = $kvm->getVMs();
@@ -25,9 +27,11 @@ if(($argv[1] ?? '') == 'backup') {
 
                 if(in_array($vm->name, Config::$VM_IGNORE_VMS)) { continue; }
 
-                if(!$vm->createBackup()) {
+                /*if(!$vm->createBackup()) {
                     $backupstate = false;
                 }
+                */                  
+                PrintScreen('Backup VM        ' . $vm->name);
 
                 $backup_compressioninfo['Files'] += $vm->backup_compressioninfo['Files'];
                 $backup_compressioninfo['OriginalSize'] += $vm->backup_compressioninfo['OriginalSize'];
@@ -44,9 +48,11 @@ if(($argv[1] ?? '') == 'backup') {
 
                 if(in_array($container->name, Config::$APPDATA_IGNORE_CONTAINER)) { continue; }
 
-                if(!$container->createBackup()){
+                /*if(!$container->createBackup()){
                     $backupstate = false;
                 }
+                */
+                PrintScreen('Backup CONTAINER ' . $container->name);
                 
                 $backup_compressioninfo['Files'] += $vm->backup_compressioninfo['Files'];
                 $backup_compressioninfo['OriginalSize'] += $vm->backup_compressioninfo['OriginalSize'];
@@ -96,7 +102,7 @@ if(($argv[1] ?? '') == 'backup') {
 
             if($vm->name == ($argv[3] ?? '')) {
 
-                $vm->createBackup(true);
+                //$vm->createBackup(true);
 
             }
 
@@ -112,7 +118,7 @@ if(($argv[1] ?? '') == 'backup') {
 
             if($container->name == ($argv[3] ?? '')) {
 
-                $container->createBackup(true);
+                //$container->createBackup(true);
 
             }
 
@@ -121,7 +127,7 @@ if(($argv[1] ?? '') == 'backup') {
     }
 
     if(($argv[2] ?? '') == 'flash') {
-        BackupFlash();
+        //BackupFlash();
     }
 }
 
