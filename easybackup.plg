@@ -3,7 +3,7 @@
 <!ENTITY name "easybackup">
 <!ENTITY author "Sascha Michel">
 <!ENTITY version "2023.11.28">
-<!ENTITY md5 "1cae93919102cef7e12eb1298e8b6d77">
+<!ENTITY md5 "f13a053c56607fcaeb2c0f6d5d8f9542">
 <!ENTITY launch "Settings/easybackup">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github "EideardVMR/unraid-easybackup">
